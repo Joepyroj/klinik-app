@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Selamat Datang di Klinik Sehat</title>
+
+    <link
+      href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/all.min.css') }}"
+    />
+
+    <style>
+      /* Mengimpor font dari Google Fonts */
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap");
+
+      /* Pengaturan dasar dan latar belakang */
+      body {
+        font-family: "Poppins", sans-serif; /* Menerapkan font Poppins */
+        background-color: #e6eef7; /* Warna latar biru muda yang lembut */
+        background-image: radial-gradient(
+            circle at 10% 20%,
+            rgb(226, 234, 240) 0%,
+            rgba(226, 234, 240, 0) 50%
+          ),
+          radial-gradient(
+            circle at 80% 70%,
+            rgb(233, 237, 250) 0%,
+            rgba(233, 237, 250, 0) 50%
+          );
+      }
+
+      .login-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+
+      /* Pengaturan kartu login */
+      .login-card {
+        max-width: 450px;
+        width: 100%;
+        border: none;
+        border-radius: 1.25rem; /* Sudut lebih tumpul */
+        background-color: rgba(255, 255, 255, 0.8); /* Sedikit transparan */
+        backdrop-filter: blur(10px); /* Efek 'glass' */
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 1rem;
+      }
+
+      /* Pengaturan tipografi */
+      .clinic-name {
+        font-weight: 600; /* Sedikit lebih tebal */
+        color: #0d6efd; /* Warna biru primer Bootstrap */
+      }
+      .welcome-title {
+        font-weight: 600;
+        font-size: 1.5rem; /* Lebih besar dan menonjol */
+        color: #212529; /* Warna hitam lembut */
+      }
+
+      /* Pengaturan tombol Google */
+      .btn-google {
+        font-weight: 400;
+        transition: all 0.3s ease-in-out;
+        box-shadow: 0 4px 15px rgba(13, 110, 253, 0.2); /* Bayangan biru yang halus */
+      }
+      .btn-google:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 20px rgba(13, 110, 253, 0.3); /* Bayangan lebih kuat saat hover */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="card shadow-lg login-card">
+        <div class="card-body p-4 p-lg-5 text-center">
+          <h3 class="mb-3 clinic-name">
+            <i class="fas fa-clinic-medical me-2"></i>Klinik Sehat
+          </h3>
+
+          <h1 class="welcome-title mb-2">Selamat Datang</h1>
+
+          <div class="d-grid gap-3">
+            <a
+              href="{{ url_for('login') }}"
+              class="btn btn-primary btn-lg btn-google"
+            >
+              <img
+                src="https://developers.google.com/identity/images/g-logo.png"
+                height="22"
+                class="me-2"
+                style="
+                  background-color: white;
+                  border-radius: 50%;
+                  padding: 1px;
+                "
+              />
+              Login dengan Google
+            </a>
+          </div>
+
+          <hr class="my-4" />
+
+          <div class="text-center">
+            <p class="mb-0 text-muted">
+              <a href="{{ url_for('admin_login') }}" class="fw-bold">Admin</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+  </body>
+</html>

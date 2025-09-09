@@ -1,0 +1,124 @@
+{% extends "layout.html" %} {% block content %}
+<div class="container" style="max-width: 600px">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h2 class="card-title text-center mb-4">Lengkapi Data Diri Anda</h2>
+      <form method="POST" id="profile-form">
+        <div class="mb-3">
+          <label for="nama" class="form-label">Nama Lengkap (sesuai KTP)</label>
+          <input
+            type="text"
+            id="nama"
+            name="nama"
+            class="form-control"
+            value="{{ patient.nama if patient else '' }}"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="telepon" class="form-label">No. Telepon (WhatsApp)</label>
+          <input
+            type="tel"
+            id="telepon"
+            name="telepon"
+            class="form-control"
+            value="{{ patient.telepon if patient else '' }}"
+            required
+          />
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="tanggal_lahir" class="form-label">Tanggal Lahir</label>
+            <input
+              type="date"
+              id="tanggal_lahir"
+              name="tanggal_lahir"
+              class="form-control"
+              value="{{ patient.tanggal_lahir.strftime('%Y-%m-%d') if patient and patient.tanggal_lahir else '' }}"
+              required
+            />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="umur" class="form-label">Umur</label>
+            <input
+              type="text"
+              id="umur"
+              name="umur"
+              class="form-control"
+              readonly
+              disabled
+            />
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="tujuan" class="form-label">Tujuan Periksa Awal</label>
+          <select id="tujuan" name="tujuan" class="form-select">
+            <option>Kontrol Kehamilan</option>
+            <option>Program Hamil</option>
+            <option>USG</option>
+            <option>Lainnya</option>
+          </select>
+        </div>
+        <div class="mb-3" id="tujuan-lainnya-wrapper" style="display: none">
+          <label for="tujuan_lainnya" class="form-label"
+            >Sebutkan Tujuan Lainnya</label
+          >
+          <input
+            type="text"
+            id="tujuan_lainnya"
+            name="tujuan_lainnya"
+            class="form-control"
+          />
+        </div>
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary">
+            Simpan dan Lanjutkan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const tglLahirInput = document.getElementById("tanggal_lahir");
+    const umurInput = document.getElementById("umur");
+    const tujuanSelect = document.getElementById("tujuan");
+    const tujuanLainnyaWrapper = document.getElementById(
+      "tujuan-lainnya-wrapper"
+    );
+    const tujuanLainnyaInput = document.getElementById("tujuan_lainnya");
+
+    // Fungsi untuk menghitung umur
+    function hitungUmur() {
+      if (!tglLahirInput.value) return;
+      const lahir = new Date(tglLahirInput.value);
+      const hariIni = new Date();
+      let umur = hariIni.getFullYear() - lahir.getFullYear();
+      const m = hariIni.getMonth() - lahir.getMonth();
+      if (m < 0 || (m === 0 && hariIni.getDate() < lahir.getDate())) {
+        umur--;
+      }
+      umurInput.value = umur + " tahun";
+    }
+
+    // Fungsi untuk menampilkan input tujuan lainnya
+    function toggleTujuanLainnya() {
+      if (tujuanSelect.value === "Lainnya") {
+        tujuanLainnyaWrapper.style.display = "block";
+        tujuanLainnyaInput.required = true;
+      } else {
+        tujuanLainnyaWrapper.style.display = "none";
+        tujuanLainnyaInput.required = false;
+      }
+    }
+
+    // Panggil fungsi saat halaman dimuat dan saat ada perubahan
+    hitungUmur();
+    toggleTujuanLainnya();
+    tglLahirInput.addEventListener("change", hitungUmur);
+    tujuanSelect.addEventListener("change", toggleTujuanLainnya);
+  });
+</script>
+{% endblock %}

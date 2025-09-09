@@ -1,0 +1,74 @@
+{# templates/admin/_receptionist_sidebar.html #}
+
+<div class="card shadow-sm">
+  <div class="card-header card-header-custom">
+    <i class="fas fa-bars me-2"></i>Navigasi
+  </div>
+  <div class="list-group list-group-flush" id="receptionist-sidebar-nav">
+    <a
+      href="{{ url_for('receptionist.index') }}"
+      class="list-group-item list-group-item-action active"
+    >
+      <i class="fas fa-clipboard-list fa-fw me-2"></i>Janji Temu Hari Ini
+    </a>
+    <a href="#" class="list-group-item list-group-item-action">
+      <i class="fas fa-qrcode fa-fw me-2"></i>Scan QR Check-in
+    </a>
+    <a
+      href="{{ url_for('receptionist_patients.index') }}"
+      class="list-group-item list-group-item-action dynamic-loader"
+    >
+      <i class="fas fa-users fa-fw me-2"></i>Pasien
+    </a>
+    <a
+      href="{{ url_for('schedule_tool.index') }}"
+      class="list-group-item list-group-item-action dynamic-loader"
+    >
+      <i class="fas fa-tools fa-fw me-2"></i>Alat Pengelola Jadwal
+    </a>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const navContainer = document.getElementById("receptionist-sidebar-nav");
+    const contentArea = document.getElementById("receptionist-content-area");
+
+    navContainer.addEventListener("click", function (e) {
+      // Cari link yang diklik yang memiliki class 'dynamic-loader'
+      const link = e.target.closest("a.dynamic-loader");
+      if (link) {
+        e.preventDefault(); // Mencegah pindah halaman secara normal
+
+        // Tandai link yang aktif
+        navContainer
+          .querySelectorAll("a")
+          .forEach((a) => a.classList.remove("active"));
+        link.classList.add("active");
+
+        const url = link.getAttribute("href");
+
+        // Tampilkan spinner loading
+        contentArea.innerHTML =
+          '<div class="d-flex justify-content-center p-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+        // Ambil konten dari server
+        fetch(url, {
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        })
+          .then((response) => response.text())
+          .then((html) => {
+            // Masukkan konten baru ke dalam "slot"
+            contentArea.innerHTML = html;
+          })
+          .catch((error) => {
+            console.error("Error loading content:", error);
+            contentArea.innerHTML =
+              '<p class="text-danger">Gagal memuat konten.</p>';
+          });
+      }
+    });
+  });
+</script>

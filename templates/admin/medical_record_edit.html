@@ -1,0 +1,37 @@
+{% extends 'admin/model/edit.html' %} {# Kita timpa blok 'edit_form' untuk
+menambahkan detail pasien di atasnya #} {% block edit_form %} {# Tampilkan data
+pasien sebagai read-only #}
+<div class="card shadow-sm mb-4">
+  <div class="card-header">
+    <i class="fas fa-user-injured me-2"></i>
+    <strong>Data Pasien (Read-Only)</strong>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <p><strong>Nama Pasien:</strong><br />{{ patient.nama }}</p>
+      </div>
+      <div class="col-md-6">
+        <p><strong>No. Telepon:</strong><br />{{ patient.telepon or '-' }}</p>
+      </div>
+      <div class="col-md-6">
+        <p>
+          <strong>Tanggal Lahir:</strong><br />
+          {% if patient.tanggal_lahir %} {{ patient.tanggal_lahir.strftime('%d
+          %B %Y') }} ({{ patient.age }} tahun) {% else %} - {% endif %}
+        </p>
+      </div>
+      <div class="col-md-6">
+        <p>
+          <strong>Tujuan Kunjungan:</strong><br />{{ patient.tujuan or '-' }}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr />
+<h4 class="mb-3">Edit Rekam Medis</h4>
+
+{# Panggil form edit standar dari Flask-Admin (sekarang hanya berisi anamnesa,
+dll.) #} {{ super() }} {% endblock %}

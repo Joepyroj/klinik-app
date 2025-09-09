@@ -1,0 +1,26 @@
+{% extends 'admin/custom.html' %} {% block page_body %}
+<div class="alert alert-info">
+  Selamat datang, {{ current_user.username }}! Ini adalah Dashboard
+  Administrator.
+</div>
+<div class="row">
+  <div class="col-md-4">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Statistik</h5>
+        <p class="card-text">Tempat untuk ringkasan data.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Aktivitas Terbaru</h5>
+        <p class="card-text">
+          Di sini bisa tampil daftar pasien berikutnya atau laporan singkat.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

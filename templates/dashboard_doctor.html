@@ -1,0 +1,227 @@
+{% extends 'admin/custom.html' %} {% block page_body %}
+<style>
+  .pasien-hadir {
+    background-color: #e3f2fd !important;
+    font-weight: 500;
+    color: #212529;
+  }
+</style>
+
+<div class="container-fluid mt-2">
+  <div class="row g-4">
+    {# ============================================== #} {# KOLOM UTAMA (KIRI)
+    #} {# ============================================== #}
+    <div class="col-lg-7">
+      <h5 class="mb-3">Pasien Berikutnya</h5>
+      <div class="card shadow-sm mb-4 siap-diperiksa-banner">
+        <div class="card-body">
+          {% if pasien_diperiksa %}
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fs-5 fw-bold text-primary"
+              >{{ pasien_diperiksa.patient.nama }}</span
+            >
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-bs-toggle="modal"
+              data-bs-target="#rekamMedisModal"
+            >
+              <i class="fas fa-file-medical me-1"></i> Buka Rekam Medis
+            </button>
+          </div>
+          {% else %}
+          <div class="text-center text-muted py-3">
+            Belum ada pasien yang siap diperiksa.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header card-header-custom">Antrean Pasien</div>
+        <ul class="list-group list-group-flush">
+          {% for app in antrean %}
+          <li
+            class="list-group-item d-flex justify-content-between align-items-center {% if app.checked_in %}pasien-hadir{% endif %}"
+          >
+            <div>
+              {{ loop.index }}. {{ app.patient.nama }}
+              <small class="d-block text-muted">
+                <i class="fas fa-phone-alt fa-xs me-1"></i>{{
+                app.patient.telepon or 'No. HP tidak ada' }}
+              </small>
+            </div>
+            {% if app.checked_in %}
+            <span class="badge bg-success">Hadir</span>
+            {% endif %}
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted">Antrean kosong.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    {# ============================================== #} {# KOLOM SAMPING
+    (KANAN) #} {# ============================================== #}
+    <div class="col-lg-5">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+          <p class="text-muted mb-3 fs-6 text-center">
+            {{ now.strftime('%A, %d %B %Y') }}
+          </p>
+          <div class="row text-center mb-3">
+            <div class="col-6">
+              <div class="summary-box-item">
+                <i class="fas fa-calendar-alt text-primary"></i>
+                <div>
+                  <h4 class="summary-value">{{ summary.available_slots }}</h4>
+                  <p class="summary-label">Slot Tersedia</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="summary-box-item">
+                <i class="fas fa-users text-success"></i>
+                <div>
+                  <h4 class="summary-value">{{ summary.registered }}</h4>
+                  <p class="summary-label">Terdaftar</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <hr />
+          <div class="mt-3">
+            <p class="summary-label text-center mb-2">
+              Pasien Selesai Ditangani
+            </p>
+            <div class="progress custom-progress">
+              <div
+                class="progress-bar bg-info"
+                role="progressbar"
+                style="width: {{ summary.percentage_handled }}%;"
+                aria-valuenow="{{ summary.percentage_handled }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                <b>{{ summary.percentage_handled }}%</b>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header card-header-custom">
+          Selesai Diperiksa Hari Ini
+        </div>
+        <ul class="list-group list-group-flush">
+          {% for record in riwayat_hari_ini %}
+          <li
+            class="list-group-item d-flex justify-content-between align-items-center"
+          >
+            {{ record.appointment.patient.nama }}
+            <a
+              href="{{ url_for('medicalrecord.edit_view', id=record.id, url=url_for('doctor_dashboard.index')) }}"
+              class="btn btn-sm btn-outline-secondary float-right"
+            >
+              <i class="fa fa-eye"></i> Lihat/Edit
+            </a>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted">Belum ada riwayat.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ===================================================================== #} {#
+MODAL / POP-UP UNTUK FORM REKAM MEDIS #} {#
+===================================================================== #} {% if
+pasien_diperiksa %}
+<div
+  class="modal fade"
+  id="rekamMedisModal"
+  tabindex="-1"
+  aria-labelledby="rekamMedisModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="rekamMedisModalLabel">
+          Rekam Medis: {{ pasien_diperiksa.patient.nama }}
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>Telepon:</strong> {{ pasien_diperiksa.patient.telepon or '-'
+            }}
+          </div>
+          <div class="col-md-6">
+            <strong>Tgl Lahir:</strong>
+            {% if pasien_diperiksa.patient.tanggal_lahir %} {{
+            pasien_diperiksa.patient.tanggal_lahir.strftime('%d %b %Y') }} ({{
+            pasien_diperiksa.patient.age }} tahun) {% else %} - {% endif %}
+          </div>
+        </div>
+        <p class="mb-3">
+          <strong>Tujuan:</strong> {{ pasien_diperiksa.patient.tujuan or '-' }}
+        </p>
+        <hr />
+
+        <form
+          id="formRekamMedis"
+          method="POST"
+          action="{{ url_for('medicalrecord.create_view', url=url_for('doctor_dashboard.index')) }}"
+        >
+          <input
+            type="hidden"
+            name="appointment"
+            value="{{ pasien_diperiksa.id }}"
+          />
+          <input
+            type="hidden"
+            name="patient"
+            value="{{ pasien_diperiksa.patient_id }}"
+          />
+          <div class="mb-3">
+            <label for="anamnesa" class="form-label">Anamnesa</label>
+            <textarea name="anamnesa" class="form-control" rows="4"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="diagnosa" class="form-label">Diagnosa</label>
+            <textarea
+              name="diagnosa"
+              class="form-control"
+              rows="4"
+              required
+            ></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="terapi" class="form-label">Terapi / Anjuran</label>
+            <textarea name="terapi" class="form-control" rows="4"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Batal
+        </button>
+        <button type="submit" form="formRekamMedis" class="btn btn-primary">
+          <i class="fas fa-save me-1"></i> Simpan Rekam Medis
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %} {% endblock %}

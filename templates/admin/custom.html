@@ -1,0 +1,116 @@
+{% extends 'admin/master.html' %} {% block head %} {{ super() }}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/custom.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+{% endblock %} {# Menghilangkan header/judul halaman bawaan Flask-Admin #} {%
+block page_header %}{% endblock %} {% block brand %}
+<a class="navbar-brand" href="{{ url_for('admin.index') }}">
+  <i class="fas fa-clinic-medical"></i>
+  Klinik Sehat{% if current_user.is_authenticated %} {% if
+  current_user.role.value == 'admin' %} Panel Administrator {% elif
+  current_user.role.value == 'dokter' %}{% elif current_user.role.value ==
+  'resepsionis' %}{% endif %} {% endif %}
+</a>
+{% endblock %} {% block menu_links %}
+<ul class="nav navbar-nav me-auto">
+  {% if current_user.is_authenticated %} {% if current_user.role.value ==
+  'admin' %} {# Untuk Admin, tampilkan menu dropdown kustom #}
+  <li class="nav-item">
+    <a class="nav-link" href="{{ url_for('admin.index') }}">
+      <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+    </a>
+  </li>
+  <li class="nav-item dropdown">
+    <a
+      class="nav-link dropdown-toggle"
+      href="#"
+      role="button"
+      data-bs-toggle="dropdown"
+    >
+      <i class="fas fa-database me-1"></i> Manajemen Data
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a class="dropdown-item" href="{{ url_for('user.index_view') }}"
+          >Data Akun Pasien</a
+        >
+      </li>
+      {% if current_user.role.value != 'resepsionis' %}
+      <li>
+        <a class="dropdown-item" href="{{ url_for('patient.index_view') }}"
+          >Data Diri Pasien</a
+        >
+      </li>
+      {% endif %}
+      <li>
+        <a class="dropdown-item" href="{{ url_for('appointment.index_view') }}"
+          >Data Janji Temu</a
+        >
+      </li>
+      <li>
+        <a class="dropdown-item" href="{{ url_for('slot.index_view') }}"
+          >Data Slot</a
+        >
+      </li>
+      <li>
+        <a
+          class="dropdown-item"
+          href="{{ url_for('medicalrecord.index_view') }}"
+          >Data Rekam Medis</a
+        >
+      </li>
+    </ul>
+  </li>
+  {% elif current_user.role.value == 'dokter' %} {# Dibiarkan kosong agar tidak
+  ada menu untuk dokter #} {% elif current_user.role.value == 'resepsionis' %}
+  {# --- BAGIAN INI SENGAJA DIKOSONGKAN --- #} {# Link navigasi resepsionis
+  sekarang ada di sidebar #} {% endif %} {% endif %}
+</ul>
+
+<ul class="navbar-nav">
+  {% if current_user.is_authenticated %}
+  <li class="nav-item dropdown">
+    <a
+      class="nav-link dropdown-toggle"
+      href="#"
+      role="button"
+      data-bs-toggle="dropdown"
+    >
+      <i class="fas fa-user me-1"></i> {{ current_user.username }}
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end">
+      <li>
+        <a class="dropdown-item" href="{{ url_for('admin_logout') }}">
+          <i class="fas fa-sign-out-alt me-1"></i> Logout
+        </a>
+      </li>
+    </ul>
+  </li>
+  {% endif %}
+</ul>
+{% endblock %} {% block body %}
+<div class="container-fluid mt-3">
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div
+    class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+    role="alert"
+  >
+    {{ message }}
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="alert"
+      aria-label="Close"
+    ></button>
+  </div>
+  {% endfor %} {% endif %} {% endwith %}
+</div>
+{% block page_body %}{% endblock %} {% endblock %} {% block tail %} {{ super()
+}} {% endblock %}

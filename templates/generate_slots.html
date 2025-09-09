@@ -1,0 +1,239 @@
+{% extends 'admin/custom.html' %} {% block page_body %}
+<div class="container mt-3">
+  <div
+    id="notification-area"
+    style="position: fixed; top: 80px; right: 20px; z-index: 1050; width: 350px"
+  ></div>
+  <h2 class="mb-4">Alat Pengelola Jadwal</h2>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-header card-header-custom">
+      <i class="fas fa-calendar-plus me-2"></i>Buat Slot Jadwal Massal
+    </div>
+    <div class="card-body">
+      <p class="card-text text-muted">
+        Tanggal yang sudah memiliki slot akan ditandai dengan warna biru.
+      </p>
+      <form
+        id="generate-form"
+        action="{{ url_for('scheduler.generate_slots_action') }}"
+        method="POST"
+      >
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="start_date" class="form-label">Tanggal Mulai</label>
+            <input
+              type="text"
+              class="form-control date-picker"
+              id="start_date"
+              name="start_date"
+              placeholder="Pilih tanggal..."
+              required
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="end_date" class="form-label">Tanggal Selesai</label>
+            <input
+              type="text"
+              class="form-control date-picker"
+              id="end_date"
+              name="end_date"
+              placeholder="Pilih tanggal..."
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label for="start_time" class="form-label">Jam Mulai Praktik</label>
+            <input
+              type="time"
+              class="form-control"
+              id="start_time"
+              name="start_time"
+              value="16:00"
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label for="end_time" class="form-label">Jam Selesai Praktik</label>
+            <input
+              type="time"
+              class="form-control"
+              id="end_time"
+              name="end_time"
+              value="20:00"
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label for="duration" class="form-label"
+              >Durasi per Pasien (menit)</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              id="duration"
+              name="duration"
+              value="15"
+              required
+            />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">
+          <i class="fas fa-cogs me-2"></i>Generate Jadwal
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header card-header-custom">
+          <i class="fas fa-clock me-2"></i>Mundurkan Jam Praktik
+        </div>
+        <div class="card-body">
+          <form
+            action="{{ url_for('scheduler.shift_time_action') }}"
+            method="POST"
+          >
+            <div class="mb-3">
+              <label for="shift_date" class="form-label">Pilih Tanggal</label>
+              <input
+                type="text"
+                class="form-control date-picker"
+                id="shift_date"
+                name="shift_date"
+                placeholder="Pilih tanggal..."
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label for="minutes_to_shift" class="form-label"
+                >Mundur Berapa Menit?</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="minutes_to_shift"
+                name="minutes_to_shift"
+                value="60"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-warning">
+              <i class="fas fa-history me-2"></i>Mundurkan Jam
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header card-header-custom">
+          <i class="fas fa-calendar-day me-2"></i>Pindahkan Jadwal Satu Hari
+        </div>
+        <div class="card-body">
+          <form
+            action="{{ url_for('scheduler.reschedule_day_action') }}"
+            method="POST"
+          >
+            <div class="mb-3">
+              <label for="reschedule_date" class="form-label"
+                >Pilih Tanggal yang Dibatalkan</label
+              >
+              <input
+                type="text"
+                class="form-control date-picker"
+                id="reschedule_date"
+                name="reschedule_date"
+                placeholder="Pilih tanggal..."
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-danger">
+              <i class="fas fa-calendar-times me-2"></i>Pindahkan Hari
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Fungsi ini akan dijalankan setelah seluruh halaman HTML siap
+  document.addEventListener("DOMContentLoaded", function () {
+    // --- Bagian untuk Notifikasi ---
+    const notificationArea = document.getElementById("notification-area");
+    const showAlert = (message, type = "success") => {
+      const alertType = type === "success" ? "alert-success" : "alert-danger";
+      const alertId = `alert-${Date.now()}`;
+      const alertHtml = `<div id="${alertId}" class="alert ${alertType} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+      notificationArea.insertAdjacentHTML("beforeend", alertHtml);
+      setTimeout(() => {
+        const alert = document.getElementById(alertId);
+        if (alert) new bootstrap.Alert(alert).close();
+      }, 5000);
+    };
+
+    // --- Bagian untuk Kalender ---
+    const initFlatpickr = async () => {
+      try {
+        const response = await fetch("/api/dates-with-slots");
+        const datesWithSlots = await response.json();
+        const pickers = document.querySelectorAll(".date-picker");
+        pickers.forEach((picker) => {
+          if (picker._flatpickr) picker._flatpickr.destroy();
+        });
+        flatpickr(".date-picker", {
+          dateFormat: "Y-m-d",
+          minDate: "today",
+          onDayCreate: function (dObj, dStr, fp, dayElem) {
+            const dateString = dayElem.dateObj.toISOString().slice(0, 10);
+            if (datesWithSlots.includes(dateString))
+              dayElem.classList.add("has-slots");
+          },
+        });
+      } catch (error) {
+        console.error("Gagal memuat data tanggal slot:", error);
+      }
+    };
+    initFlatpickr();
+
+    // --- Bagian untuk Form Generate Slot ---
+    const generateForm = document.getElementById("generate-form");
+    if (generateForm) {
+      generateForm.addEventListener("submit", async function (e) {
+        e.preventDefault(); // Mencegah pindah halaman
+        const button = generateForm.querySelector('button[type="submit"]');
+        const originalButtonText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML =
+          '<span class="spinner-border spinner-border-sm"></span> Generating...';
+
+        try {
+          const response = await fetch(generateForm.action, {
+            method: "POST",
+            body: new FormData(generateForm),
+          });
+          const result = await response.json();
+          if (response.ok) {
+            showAlert(result.message, result.success ? "success" : "danger");
+            if (result.success) {
+              generateForm.reset();
+              initFlatpickr(); // Update kalender
+            }
+          } else {
+            showAlert(result.message || "Error Server.", "danger");
+          }
+        } catch (error) {
+          showAlert("Kesalahan Jaringan.", "danger");
+        } finally {
+          button.disabled = false;
+          button.innerHTML = originalButtonText;
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

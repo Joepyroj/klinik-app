@@ -1,0 +1,15 @@
+# Virtual Environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Instance folder (termasuk database)
+instance/
+
+# File environment (jika ada)
+.env
+
+# VS Code settings
+.vscode/

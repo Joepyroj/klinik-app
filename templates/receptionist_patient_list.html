@@ -1,0 +1,119 @@
+<div class="container-fluid mt-3">
+  <div class="row g-4">
+    {# Kolom Kiri untuk Sidebar Pencarian #}
+    <div class="col-lg-3">
+      <div class="card shadow-sm">
+        <div class="card-header card-header-custom">
+          <i class="fas fa-search me-2"></i>Cari Pasien
+        </div>
+        <div class="card-body">
+          <form
+            method="GET"
+            action="{{ url_for('receptionist_patients.index') }}"
+          >
+            <div class="mb-3">
+              <label for="search" class="form-label"
+                >Cari berdasarkan Nama, Email, atau Tgl Lahir
+                (YYYY-MM-DD)</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="search"
+                name="search"
+                value="{{ search_query or '' }}"
+                placeholder="Ketik di sini..."
+              />
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Cari</button>
+            {% if search_query %}
+            <a
+              href="{{ url_for('receptionist_patients.index') }}"
+              class="btn btn-outline-secondary w-100 mt-2"
+              >Reset</a
+            >
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+
+    {# Kolom Kanan untuk Daftar Pasien #}
+    <div class="col-lg-9">
+      <div class="card shadow-sm">
+        <div class="card-header card-header-custom">
+          <i class="fas fa-users me-2"></i>
+          {% if search_query %} Hasil Pencarian untuk "{{ search_query }}" {%
+          else %} Daftar Semua Pasien {% endif %}
+        </div>
+        <div class="list-group list-group-flush">
+          {% for patient in patients.items %}
+          <div class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">{{ patient.nama }}</h5>
+              <small class="text-muted">ID: {{ patient.id }}</small>
+            </div>
+            <p class="mb-1">
+              <i class="fas fa-envelope fa-fw me-1 text-muted"></i> {{
+              patient.user.email }} |
+              <i class="fas fa-phone fa-fw me-1 text-muted"></i> {{
+              patient.telepon or '-' }} |
+              <i class="fas fa-birthday-cake fa-fw me-1 text-muted"></i>
+              {% if patient.tanggal_lahir %}{{
+              patient.tanggal_lahir.strftime('%d %b %Y') }}{% else %}-{% endif
+              %}
+            </p>
+          </div>
+          {% else %}
+          <div class="list-group-item text-center text-muted p-5">
+            <p>Pasien tidak ditemukan.</p>
+          </div>
+          {% endfor %}
+        </div>
+
+        {# Pagination Controls #} {% if patients.pages > 1 %}
+        <div class="card-footer">
+          <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+              <li
+                class="page-item {% if not patients.has_prev %}disabled{% endif %}"
+              >
+                <a
+                  class="page-link"
+                  href="{{ url_for('receptionist_patients.index', page=patients.prev_num, search=search_query) }}"
+                  >Sebelumnya</a
+                >
+              </li>
+              {% for page_num in patients.iter_pages(left_edge=1, right_edge=1,
+              left_current=2, right_current=2) %} {% if page_num %}
+              <li
+                class="page-item {% if patients.page == page_num %}active{% endif %}"
+              >
+                <a
+                  class="page-link"
+                  href="{{ url_for('receptionist_patients.index', page=page_num, search=search_query) }}"
+                  >{{ page_num }}</a
+                >
+              </li>
+              {% else %}
+              <li class="page-item disabled">
+                <span class="page-link">...</span>
+              </li>
+              {% endif %} {% endfor %}
+              <li
+                class="page-item {% if not patients.has_next %}disabled{% endif %}"
+              >
+                <a
+                  class="page-link"
+                  href="{{ url_for('receptionist_patients.index', page=patients.next_num, search=search_query) }}"
+                  >Berikutnya</a
+                >
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,162 @@
+{# templates/_schedule_tool_content.html #}
+
+<h2 class="mb-4">Alat Pengelola Jadwal</h2>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header card-header-custom">
+    <i class="fas fa-calendar-plus me-2"></i>Buat Slot Jadwal Massal
+  </div>
+  <div class="card-body">
+    <p class="card-text text-muted">
+      Gunakan form ini untuk membuat jadwal praktik untuk beberapa hari ke depan
+      secara otomatis. Sistem hanya akan membuat slot untuk hari Senin - Jumat.
+    </p>
+    <form
+      action="{{ url_for('scheduler.generate_slots_action') }}"
+      method="POST"
+    >
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="start_date" class="form-label">Tanggal Mulai</label>
+          <input
+            type="date"
+            class="form-control"
+            id="start_date"
+            name="start_date"
+            required
+          />
+        </div>
+        <div class="col-md-6">
+          <label for="end_date" class="form-label">Tanggal Selesai</label>
+          <input
+            type="date"
+            class="form-control"
+            id="end_date"
+            name="end_date"
+            required
+          />
+        </div>
+        <div class="col-md-4">
+          <label for="start_time" class="form-label">Jam Mulai Praktik</label>
+          <input
+            type="time"
+            class="form-control"
+            id="start_time"
+            name="start_time"
+            value="16:00"
+            required
+          />
+        </div>
+        <div class="col-md-4">
+          <label for="end_time" class="form-label">Jam Selesai Praktik</label>
+          <input
+            type="time"
+            class="form-control"
+            id="end_time"
+            name="end_time"
+            value="20:00"
+            required
+          />
+        </div>
+        <div class="col-md-4">
+          <label for="duration" class="form-label"
+            >Durasi per Pasien (menit)</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            id="duration"
+            name="duration"
+            value="15"
+            required
+          />
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary mt-3">
+        <i class="fas fa-cogs me-2"></i>Generate Jadwal
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header card-header-custom">
+        <i class="fas fa-clock me-2"></i>Mundurkan Jam Praktik
+      </div>
+      <div class="card-body">
+        <p class="card-text text-muted">
+          Jika dokter terlambat, gunakan ini untuk memundurkan semua slot yang
+          **belum dibooking** pada hari yang dipilih.
+        </p>
+        <form
+          action="{{ url_for('scheduler.shift_time_action') }}"
+          method="POST"
+        >
+          <div class="mb-3">
+            <label for="shift_date" class="form-label">Pilih Tanggal</label>
+            <input
+              type="date"
+              class="form-control"
+              id="shift_date"
+              name="shift_date"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="minutes_to_shift" class="form-label"
+              >Mundur Berapa Menit?</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              id="minutes_to_shift"
+              name="minutes_to_shift"
+              value="60"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-warning">
+            <i class="fas fa-history me-2"></i>Mundurkan Jam
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header card-header-custom">
+        <i class="fas fa-calendar-day me-2"></i>Pindahkan Jadwal Satu Hari
+      </div>
+      <div class="card-body">
+        <p class="card-text text-muted">
+          Jika dokter tidak bisa praktik, pindahkan semua slot yang **belum
+          dibooking** ke hari kerja berikutnya. Aksi ini akan gagal jika sudah
+          ada pasien yang terdaftar.
+        </p>
+        <form
+          action="{{ url_for('scheduler.reschedule_day_action') }}"
+          method="POST"
+        >
+          <div class="mb-3">
+            <label for="reschedule_date" class="form-label"
+              >Pilih Tanggal yang Dibatalkan</label
+            >
+            <input
+              type="date"
+              class="form-control"
+              id="reschedule_date"
+              name="reschedule_date"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-calendar-times me-2"></i>Pindahkan Hari
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

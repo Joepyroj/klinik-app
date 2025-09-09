@@ -1,0 +1,79 @@
+{% extends 'admin/custom.html' %} {% block page_body %}
+<div class="container-fluid mt-3">
+  <div class="row g-4">
+    {# Kolom Kiri untuk Sidebar Navigasi #}
+    <div class="col-lg-3">{% include 'admin/_receptionist_sidebar.html' %}</div>
+
+    {# Kolom Kanan untuk Konten Utama #}
+    <div class="col-lg-9">
+      {# Ini adalah "wadah" atau "slot" untuk konten dinamis #}
+      <div id="receptionist-content-area">
+        <div class="card shadow-sm">
+          <div class="card-header card-header-custom">
+            <i class="fas fa-clipboard-list me-2"></i>Daftar Janji Temu Hari Ini
+            ({{ now.strftime('%d %B %Y') }})
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">Jam</th>
+                  <th scope="col">Nama Pasien</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="text-center">Aksi Manual</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for app in appointments %}
+                <tr>
+                  <td>
+                    <strong>{{ app.slot.start_time.strftime('%H:%M') }}</strong>
+                  </td>
+                  <td>
+                    {{ app.patient.nama }}
+                    <small class="d-block text-muted">
+                      <i class="fas fa-phone-alt fa-xs me-1"></i>{{
+                      app.patient.telepon or 'No. HP tidak ada' }}
+                    </small>
+                  </td>
+                  <td>
+                    {% if app.medical_record %}
+                    <span class="badge bg-secondary status-badge"
+                      >Selesai Diperiksa</span
+                    >
+                    {% elif app.checked_in %}
+                    <span class="badge bg-success status-badge"
+                      >Sudah Check-in</span
+                    >
+                    {% else %}
+                    <span class="badge bg-warning text-dark status-badge"
+                      >Menunggu Kedatangan</span
+                    >
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if not app.checked_in and not app.medical_record %}
+                    <a
+                      href="{{ url_for('check_in_patient', appointment_id=app.id) }}"
+                      class="btn btn-sm btn-outline-success"
+                      >Check-in</a
+                    >
+                    {% else %} - {% endif %}
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted p-4">
+                    Belum ada janji temu untuk hari ini.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

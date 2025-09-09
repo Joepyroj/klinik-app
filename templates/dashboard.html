@@ -1,0 +1,242 @@
+{% extends "layout.html" %} {% block content %}
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card shadow-sm mb-4">
+      <div class="card-body text-center">
+        <img
+          src="{{ user.picture }}"
+          class="rounded-circle mb-3"
+          width="100"
+          alt="Foto Profil"
+        />
+        <h4 class="card-title">
+          Selamat Datang, <br />
+          {{ patient.nama }}!
+        </h4>
+        <p class="text-muted">{{ user.email }}</p>
+        <a
+          href="{{ url_for('lengkapi_profil') }}"
+          class="btn btn-sm btn-outline-secondary"
+        >
+          <i class="fas fa-edit me-1"></i> Edit Profil Pasien
+        </a>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header text-center">
+        <h5 class="mb-0">Konfirmasi Kehadiran</h5>
+      </div>
+      <div class="card-body text-center">
+        {% if next_appointment %}
+        <p>
+          Tunjukkan QR Code ini kepada resepsionis saat Anda tiba di klinik
+          untuk janji temu pada:
+        </p>
+        <p class="fw-bold">
+          {{ next_appointment.slot.start_time.strftime('%d %b %Y, %H:%M') }}
+        </p>
+        <img
+          src="{{ url_for('generate_qr_code', booking_uuid=next_appointment.booking_uuid) }}"
+          width="200"
+          class="img-fluid"
+        />
+        {% else %}
+        <p class="text-muted">
+          Anda tidak memiliki janji temu yang akan datang. Silakan buat janji
+          temu baru.
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">Buat Janji Temu Baru</h5>
+      </div>
+      <div class="card-body">
+        <h6>Pilih Tanggal (Tersedia 14 hari ke depan)</h6>
+        <div id="date-selector" class="d-flex flex-wrap gap-2 mb-3">
+          {% for d in available_dates %}
+          <button
+            class="btn btn-outline-primary date-btn"
+            data-date="{{ d.strftime('%Y-%m-%d') }}"
+          >
+            {{ d.strftime('%a, %d %b') }}
+          </button>
+          {% endfor %}
+        </div>
+        <div id="slot-section" style="display: none">
+          <h6>Pilih Jam Tersedia</h6>
+          <form method="POST" action="{{ url_for('dashboard') }}">
+            <div id="slot-selector" class="d-flex flex-wrap gap-2 mb-3"></div>
+            <button
+              type="submit"
+              class="btn btn-success"
+              id="book-btn"
+              disabled
+            >
+              <i class="fas fa-check me-1"></i> Booking Sekarang
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h5 class="mb-0">Riwayat Pemeriksaan</h5>
+      </div>
+      <div class="accordion accordion-flush" id="historyAccordion">
+        {% for app in history %}
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="heading-{{ app.id }}">
+            <button
+              class="accordion-button collapsed history-toggle"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapse-{{ app.id }}"
+              data-appointment-id="{{ app.id }}"
+            >
+              <i class="fas fa-calendar-check me-2"></i>
+              Pemeriksaan tanggal:
+              <strong
+                >&nbsp;{{ app.slot.start_time.strftime('%d %B %Y') }}</strong
+              >
+            </button>
+          </h2>
+          <div
+            id="collapse-{{ app.id }}"
+            class="accordion-collapse collapse"
+            aria-labelledby="heading-{{ app.id }}"
+            data-bs-parent="#historyAccordion"
+          >
+            {# Konten akan diisi oleh JavaScript #}
+            <div class="accordion-body record-details">
+              <div class="text-center">
+                <div class="spinner-border spinner-border-sm" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="card-body text-center text-muted">
+          Belum ada riwayat pemeriksaan.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Kode JavaScript untuk Booking Janji Temu
+  document.addEventListener("DOMContentLoaded", function () {
+    const dateSelector = document.getElementById("date-selector");
+    const slotSection = document.getElementById("slot-section");
+    const slotSelector = document.getElementById("slot-selector");
+    const bookBtn = document.getElementById("book-btn");
+    let selectedSlotInput = null;
+
+    dateSelector.addEventListener("click", async function (e) {
+      if (e.target.classList.contains("date-btn")) {
+        document
+          .querySelectorAll(".date-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        e.target.classList.add("active");
+        const selectedDate = e.target.dataset.date;
+        slotSelector.innerHTML =
+          '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div>';
+        slotSection.style.display = "block";
+        bookBtn.disabled = true;
+
+        try {
+          const response = await fetch(
+            `/api/slots-for-date?date=${selectedDate}`
+          );
+          if (!response.ok) throw new Error("Gagal mengambil data slot");
+          const slots = await response.json();
+          slotSelector.innerHTML = "";
+
+          if (slots.length > 0) {
+            slots.forEach((slot) => {
+              const slotRadio = document.createElement("input");
+              slotRadio.type = "radio";
+              slotRadio.className = "btn-check slot-radio";
+              slotRadio.name = "slot_id";
+              slotRadio.id = `slot-${slot.id}`;
+              slotRadio.value = slot.id;
+              slotRadio.autocomplete = "off";
+
+              const slotLabel = document.createElement("label");
+              slotLabel.className = "btn btn-outline-success";
+              slotLabel.htmlFor = `slot-${slot.id}`;
+              slotLabel.textContent = slot.time;
+
+              slotSelector.appendChild(slotRadio);
+              slotSelector.appendChild(slotLabel);
+            });
+          } else {
+            slotSelector.innerHTML =
+              '<p class="text-muted">Tidak ada jam yang tersedia untuk tanggal ini.</p>';
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          slotSelector.innerHTML =
+            '<p class="text-danger">Terjadi kesalahan saat memuat jadwal.</p>';
+        }
+      }
+    });
+
+    slotSelector.addEventListener("change", function (e) {
+      if (e.target.classList.contains("slot-radio")) {
+        bookBtn.disabled = false;
+      }
+    });
+  });
+
+  // Kode JavaScript untuk Riwayat Pemeriksaan (Accordion)
+  document.querySelectorAll(".history-toggle").forEach((button) => {
+    button.addEventListener("click", async function () {
+      const appointmentId = this.dataset.appointmentId;
+      const targetCollapseId = this.getAttribute("data-bs-target");
+      const detailsContainer = document.querySelector(
+        `${targetCollapseId} .record-details`
+      );
+
+      if (detailsContainer.querySelector(".spinner-border")) {
+        try {
+          const response = await fetch(`/api/medical-record/${appointmentId}`);
+          if (!response.ok) throw new Error("Data tidak ditemukan");
+
+          const data = await response.json();
+
+          detailsContainer.innerHTML = `
+                        <p><strong>Anamnesa (Keluhan):</strong><br>${data.anamnesa.replace(
+                          /\n/g,
+                          "<br>"
+                        )}</p>
+                        <hr>
+                        <p><strong>Diagnosa Dokter:</strong><br>${data.diagnosa.replace(
+                          /\n/g,
+                          "<br>"
+                        )}</p>
+                        <hr>
+                        <p><strong>Terapi / Anjuran:</strong><br>${data.terapi.replace(
+                          /\n/g,
+                          "<br>"
+                        )}</p>
+                    `;
+        } catch (error) {
+          detailsContainer.innerHTML =
+            '<p class="text-danger">Gagal memuat detail rekam medis.</p>';
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}
