@@ -343,6 +343,31 @@ class ReceptionistHomeView(BaseView):
     def is_visible(self):
         return False
     
+class ReceptionistScheduleView(BaseView):
+    @expose('/')
+    def index(self):
+        future_dates_query = db.session.query(func.date(Slot.start_time))\
+            .filter(func.date(Slot.start_time) >= date.today())\
+            .distinct()\
+            .order_by(func.date(Slot.start_time).asc())\
+            .all()
+
+        print("\n--- DEBUG: Memulai proses konversi data ---")
+        available_days = []
+        for i, d_tuple in enumerate(future_dates_query):
+            day_item = d_tuple[0]
+            print(f"--> Memproses item #{i}: '{day_item}' (Tipe data: {type(day_item)})")
+            
+            if isinstance(day_item, str):
+                print("    -> Terdeteksi sebagai string, melakukan konversi...")
+                day_item = datetime.strptime(day_item, '%Y-%m-%d').date()
+                print(f"    -> Hasil konversi: '{day_item}' (Tipe data baru: {type(day_item)})")
+            
+            if day_item:
+                available_days.append(day_item)
+        
+        return self.render('admin/_receptionist_schedule_content.html', available_days=available_days)
+    
 class ScheduleManagementView(BaseView):
     @expose('/')
     def index(self):
@@ -392,7 +417,7 @@ def create_app():
     admin.add_view(ReceptionistHomeView(name="Home Resepsionis", endpoint='receptionist'))
     admin.add_view(ScheduleManagementView(name="Alat Pengelola Jadwal", endpoint='schedule_tool'))
     admin.add_view(ReceptionistPatientView(name="Daftar Pasien Resepsionis", endpoint='receptionist_patients'))
-
+    admin.add_view(ReceptionistScheduleView(name="Lihat Jadwal Slot", endpoint='receptionist_schedule'))
     app.register_blueprint(scheduler_bp)
     return app
 
@@ -641,7 +666,48 @@ def get_dates_with_slots():
     
     return jsonify(dates_with_slots)
 
+@app.route('/api/slots-by-date')
+@login_required
+def get_slots_by_date():
+    date_str = request.args.get('date')
+    if not date_str:
+        return jsonify({"error": "Parameter tanggal dibutuhkan"}), 400
 
+    try:
+        selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        start_of_day = datetime.combine(selected_date, datetime.min.time())
+        end_of_day = datetime.combine(selected_date, datetime.max.time())
+        
+        slots_query = db.session.query(Slot).options(
+            db.joinedload(Slot.appointment).joinedload(Appointment.patient)
+        ).filter(
+            Slot.start_time.between(start_of_day, end_of_day)
+        ).order_by(
+            Slot.start_time.asc()
+        ).all()
+
+        result = []
+        for slot in slots_query:
+            patient_name = None
+            if slot.is_booked and slot.appointment and slot.appointment.patient:
+                patient_name = slot.appointment.patient.nama
+
+            result.append({
+                'id': slot.id,
+                'time': slot.start_time.strftime('%H:%M'),
+                'is_booked': slot.is_booked,
+                'patient_name': patient_name
+            })
+        
+        return jsonify(result)
+
+    except ValueError:
+        return jsonify({"error": "Format tanggal tidak valid. Gunakan YYYY-MM-DD"}), 400
+    except Exception as e:
+        # Menambahkan logging error untuk debugging di server
+        app.logger.error(f"Error fetching slots: {e}")
+        return jsonify({"error": "Terjadi kesalahan di server"}), 500
+    
 # --- Admin Panel Routes ---
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():

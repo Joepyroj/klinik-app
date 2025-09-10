@@ -21,6 +21,12 @@
       <i class="fas fa-users fa-fw me-2"></i>Pasien
     </a>
     <a
+      href="{{ url_for('receptionist_schedule.index') }}"
+      class="list-group-item list-group-item-action dynamic-loader"
+    >
+      <i class="fas fa-calendar-check fa-fw me-2"></i>Lihat Jadwal Slot
+    </a>
+    <a
       href="{{ url_for('schedule_tool.index') }}"
       class="list-group-item list-group-item-action dynamic-loader"
     >
@@ -34,33 +40,21 @@
     const navContainer = document.getElementById("receptionist-sidebar-nav");
     const contentArea = document.getElementById("receptionist-content-area");
 
+    // Bagian untuk memuat panel konten (Pasien, Jadwal, dll.)
     navContainer.addEventListener("click", function (e) {
-      // Cari link yang diklik yang memiliki class 'dynamic-loader'
       const link = e.target.closest("a.dynamic-loader");
       if (link) {
-        e.preventDefault(); // Mencegah pindah halaman secara normal
-
-        // Tandai link yang aktif
+        e.preventDefault();
         navContainer
           .querySelectorAll("a")
           .forEach((a) => a.classList.remove("active"));
         link.classList.add("active");
-
         const url = link.getAttribute("href");
-
-        // Tampilkan spinner loading
         contentArea.innerHTML =
           '<div class="d-flex justify-content-center p-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-
-        // Ambil konten dari server
-        fetch(url, {
-          headers: {
-            "X-Requested-With": "XMLHttpRequest",
-          },
-        })
+        fetch(url)
           .then((response) => response.text())
           .then((html) => {
-            // Masukkan konten baru ke dalam "slot"
             contentArea.innerHTML = html;
           })
           .catch((error) => {
@@ -68,6 +62,55 @@
             contentArea.innerHTML =
               '<p class="text-danger">Gagal memuat konten.</p>';
           });
+      }
+    });
+
+    // Bagian untuk menangani klik tombol tanggal di dalam panel
+    contentArea.addEventListener("click", async function (e) {
+      if (e.target.classList.contains("date-btn")) {
+        const dateButton = e.target;
+        contentArea
+          .querySelectorAll(".date-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        dateButton.classList.add("active");
+        const selectedDate = dateButton.dataset.date;
+        const slotSection = contentArea.querySelector("#slot-section");
+        const slotDisplay = contentArea.querySelector("#slot-display");
+        if (!slotSection || !slotDisplay) return;
+
+        slotSection.style.display = "block";
+        slotDisplay.innerHTML =
+          '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div>';
+        try {
+          const response = await fetch(
+            `/api/slots-by-date?date=${selectedDate}`
+          );
+          if (!response.ok) throw new Error("Gagal mengambil data slot");
+          const slots = await response.json();
+          slotDisplay.innerHTML = "";
+          if (slots.length > 0) {
+            slots.forEach((slot) => {
+              const slotDiv = document.createElement("div");
+              slotDiv.className = "slot-item";
+              slotDiv.classList.add(
+                slot.is_booked ? "slot-booked" : "slot-available"
+              );
+              let slotContent = slot.time;
+              if (slot.is_booked && slot.patient_name) {
+                slotContent += ` - ${slot.patient_name}`;
+              }
+              slotDiv.textContent = slotContent;
+              slotDisplay.appendChild(slotDiv);
+            });
+          } else {
+            slotDisplay.innerHTML =
+              '<p class="text-muted">Tidak ada jam yang terjadwal untuk tanggal ini.</p>';
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          slotDisplay.innerHTML =
+            '<p class="text-danger">Terjadi kesalahan saat memuat jadwal.</p>';
+        }
       }
     });
   });
