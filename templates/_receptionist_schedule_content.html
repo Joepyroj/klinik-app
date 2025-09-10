@@ -1,0 +1,55 @@
+<style>
+  .date-btn.active {
+    font-weight: bold;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  .slot-item {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    cursor: default;
+  }
+  .slot-booked {
+    background-color: #f8d7da; /* Merah muda */
+    border-color: #f5c6cb;
+    color: #721c24;
+    text-decoration: line-through;
+  }
+  .slot-available {
+    background-color: #d4edda; /* Hijau muda */
+    border-color: #c3e6cb;
+    color: #155724;
+  }
+</style>
+
+<div class="card shadow-sm">
+  <div class="card-header card-header-custom">
+    <i class="fas fa-calendar-alt me-2"></i>Lihat Jadwal Slot
+  </div>
+  <div class="card-body">
+    <h6>Pilih Tanggal</h6>
+    <div id="date-selector" class="d-flex flex-wrap gap-2 mb-3">
+      {% for d in available_days %}
+      <button
+        class="btn btn-outline-primary date-btn"
+        data-date="{{ d.strftime('%Y-%m-%d') }}"
+      >
+        {{ d.strftime('%a, %d %b') }}
+      </button>
+      {% else %}
+      <p class="text-muted">
+        Belum ada slot yang dibuat untuk hari-hari mendatang.
+      </p>
+      {% endfor %}
+    </div>
+
+    <div id="slot-section" style="display: none">
+      <hr />
+      <h6>Detail Jam pada Tanggal Terpilih</h6>
+      <div id="slot-display" class="d-flex flex-wrap"></div>
+    </div>
+  </div>
+</div>
