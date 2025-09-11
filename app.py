@@ -387,17 +387,11 @@ class ReceptionistScheduleView(BaseView):
             .order_by(func.date(Slot.start_time).asc())\
             .all()
 
-        print("\n--- DEBUG: Memulai proses konversi data ---")
         available_days = []
         for i, d_tuple in enumerate(future_dates_query):
             day_item = d_tuple[0]
-            print(f"--> Memproses item #{i}: '{day_item}' (Tipe data: {type(day_item)})")
-            
             if isinstance(day_item, str):
-                print("    -> Terdeteksi sebagai string, melakukan konversi...")
                 day_item = datetime.strptime(day_item, '%Y-%m-%d').date()
-                print(f"    -> Hasil konversi: '{day_item}' (Tipe data baru: {type(day_item)})")
-            
             if day_item:
                 available_days.append(day_item)
         
