@@ -1,240 +1,205 @@
-{% extends "layout.html" %} {% block content %}
-<div class="row g-4">
-  <div class="col-lg-4">
-    <div class="card shadow-sm mb-4">
-      <div class="card-body text-center">
-        <img
-          src="{{ user.picture }}"
-          class="rounded-circle mb-3"
-          width="100"
-          alt="Foto Profil"
-        />
-        <h4 class="card-title">
-          Selamat Datang, <br />
-          {{ patient.nama }}!
-        </h4>
-        <p class="text-muted">{{ user.email }}</p>
-        <a
-          href="{{ url_for('lengkapi_profil') }}"
-          class="btn btn-sm btn-outline-secondary"
-        >
-          <i class="fas fa-edit me-1"></i> Edit Profil Pasien
-        </a>
-      </div>
-    </div>
+{% extends 'base.html' %} {% block content %}
+<div class="container mt-4 patient-dashboard-theme">
+  <h3 class="mb-4">
+    Selamat datang, <span class="text-primary">{{ user.name }}</span>!
+  </h3>
 
-    <div class="card shadow-sm">
-      <div class="card-header text-center">
-        <h5 class="mb-0">Konfirmasi Kehadiran</h5>
-      </div>
-      <div class="card-body text-center">
-        {% if next_appointment %}
-        <p>
-          Tunjukkan QR Code ini kepada resepsionis saat Anda tiba di klinik
-          untuk janji temu pada:
-        </p>
-        <p class="fw-bold">
-          {{ next_appointment.slot.start_time.strftime('%d %b %Y, %H:%M') }}
-        </p>
-        <img
-          src="{{ url_for('generate_qr_code', booking_uuid=next_appointment.booking_uuid) }}"
-          width="200"
-          class="img-fluid"
-        />
-        {% else %}
-        <p class="text-muted">
-          Anda tidak memiliki janji temu yang akan datang. Silakan buat janji
-          temu baru.
-        </p>
-        {% endif %}
+  {% if next_appointment %}
+  <div class="card dashboard-card next-appointment-card mb-4">
+    <div class="card-body p-4">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h5 class="mb-3">
+            <i class="fas fa-calendar-check me-2"></i>Janji Temu Anda Berikutnya
+          </h5>
+          <p class="display-6 mb-1">
+            {{ next_appointment.slot.start_time.strftime('%A, %d %B %Y') }}
+          </p>
+          <p class="fs-4">
+            Pukul
+            <strong
+              >{{ next_appointment.slot.start_time.strftime('%H:%M') }}
+              WIB</strong
+            >
+          </p>
+          <small>Tunjukkan QR Code ini kepada resepsionis saat check-in.</small>
+        </div>
+        <div class="col-md-4 text-center text-md-end mt-3 mt-md-0">
+          <div class="qr-code-wrapper d-inline-block">
+            <img
+              src="{{ url_for('generate_qr_code', booking_uuid=next_appointment.booking_uuid) }}"
+              alt="QR Code Janji Temu"
+            />
+          </div>
+        </div>
       </div>
     </div>
   </div>
+  {% endif %}
 
-  <div class="col-lg-8">
-    <div class="card shadow-sm mb-4">
-      <div class="card-header">
-        <h5 class="mb-0">Buat Janji Temu Baru</h5>
-      </div>
-      <div class="card-body">
-        <h6>Pilih Tanggal (Tersedia 14 hari ke depan)</h6>
-        <div id="date-selector" class="d-flex flex-wrap gap-2 mb-3">
-          {% for d in available_dates %}
-          <button
-            class="btn btn-outline-primary date-btn"
-            data-date="{{ d.strftime('%Y-%m-%d') }}"
-          >
-            {{ d.strftime('%a, %d %b') }}
-          </button>
-          {% endfor %}
+  <div class="row">
+    <div class="col-lg-7 mb-4">
+      <div class="card dashboard-card">
+        <div class="card-header">
+          <i class="fas fa-plus-circle me-2"></i>Buat Janji Temu Baru
         </div>
-        <div id="slot-section" style="display: none">
-          <h6>Pilih Jam Tersedia</h6>
+        <div class="card-body">
           <form method="POST" action="{{ url_for('dashboard') }}">
-            <div id="slot-selector" class="d-flex flex-wrap gap-2 mb-3"></div>
-            <button
-              type="submit"
-              class="btn btn-success"
-              id="book-btn"
-              disabled
-            >
-              <i class="fas fa-check me-1"></i> Booking Sekarang
-            </button>
+            <h6>1. Pilih Tanggal</h6>
+            <div id="date-selector" class="d-flex flex-wrap gap-2 mb-4">
+              {% for d in available_dates %}
+              <button
+                type="button"
+                class="btn btn-outline-primary date-btn"
+                data-date="{{ d.strftime('%Y-%m-%d') }}"
+              >
+                {{ d.strftime('%a, %d %b') }}
+              </button>
+              {% else %}
+              <p class="text-muted">
+                Maaf, saat ini tidak ada jadwal yang tersedia.
+              </p>
+              {% endfor %}
+            </div>
+
+            <div id="slot-section" style="display: none">
+              <hr />
+              <h6>2. Pilih Jam</h6>
+              <div id="slot-selector" class="mb-4"></div>
+
+              <input type="hidden" name="slot_id" id="selected-slot-id" />
+              <button
+                type="submit"
+                id="booking-btn"
+                class="btn btn-primary btn-lg w-100 btn-booking"
+                disabled
+              >
+                <i class="fas fa-check-circle me-2"></i>Booking Sekarang
+              </button>
+            </div>
           </form>
         </div>
       </div>
     </div>
 
-    <div class="card shadow-sm">
-      <div class="card-header">
-        <h5 class="mb-0">Riwayat Pemeriksaan</h5>
-      </div>
-      <div class="accordion accordion-flush" id="historyAccordion">
-        {% for app in history %}
-        <div class="accordion-item">
-          <h2 class="accordion-header" id="heading-{{ app.id }}">
-            <button
-              class="accordion-button collapsed history-toggle"
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#collapse-{{ app.id }}"
-              data-appointment-id="{{ app.id }}"
-            >
-              <i class="fas fa-calendar-check me-2"></i>
-              Pemeriksaan tanggal:
-              <strong
-                >&nbsp;{{ app.slot.start_time.strftime('%d %B %Y') }}</strong
+    <div class="col-lg-5 mb-4">
+      <div class="card dashboard-card">
+        <div class="card-header">
+          <i class="fas fa-history me-2"></i>Riwayat Pemeriksaan
+        </div>
+        <div class="accordion accordion-flush" id="historyAccordion">
+          {% for app in history %}
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-{{ app.id }}">
+              <button
+                class="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapse-{{ app.id }}"
               >
-            </button>
-          </h2>
-          <div
-            id="collapse-{{ app.id }}"
-            class="accordion-collapse collapse"
-            aria-labelledby="heading-{{ app.id }}"
-            data-bs-parent="#historyAccordion"
-          >
-            {# Konten akan diisi oleh JavaScript #}
-            <div class="accordion-body record-details">
-              <div class="text-center">
-                <div class="spinner-border spinner-border-sm" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
+                <i class="fas fa-calendar-alt me-2"></i> {{
+                app.slot.start_time.strftime('%d %B %Y') }}
+              </button>
+            </h2>
+            <div
+              id="collapse-{{ app.id }}"
+              class="accordion-collapse collapse"
+              data-bs-parent="#historyAccordion"
+            >
+              <div class="accordion-body">
+                <p><strong>Dokter:</strong> [Nama Dokter]</p>
+                <p>
+                  <strong>Diagnosa:</strong><br />{{ app.medical_record.diagnosa
+                  if app.medical_record else 'N/A' }}
+                </p>
+                <p>
+                  <strong>Terapi:</strong><br />{{ app.medical_record.terapi if
+                  app.medical_record else 'N/A' }}
+                </p>
               </div>
             </div>
           </div>
+          {% else %}
+          <div class="card-body text-center text-muted">
+            Anda belum memiliki riwayat pemeriksaan.
+          </div>
+          {% endfor %}
         </div>
-        {% else %}
-        <div class="card-body text-center text-muted">
-          Belum ada riwayat pemeriksaan.
-        </div>
-        {% endfor %}
       </div>
     </div>
   </div>
 </div>
 
 <script>
-  // Kode JavaScript untuk Booking Janji Temu
   document.addEventListener("DOMContentLoaded", function () {
     const dateSelector = document.getElementById("date-selector");
     const slotSection = document.getElementById("slot-section");
     const slotSelector = document.getElementById("slot-selector");
-    const bookBtn = document.getElementById("book-btn");
-    let selectedSlotInput = null;
+    const bookingBtn = document.getElementById("booking-btn");
+    const selectedSlotInput = document.getElementById("selected-slot-id");
 
+    // Event listener untuk tombol TANGGAL
     dateSelector.addEventListener("click", async function (e) {
       if (e.target.classList.contains("date-btn")) {
+        // Logika untuk tombol tanggal tetap sama
         document
           .querySelectorAll(".date-btn")
           .forEach((btn) => btn.classList.remove("active"));
         e.target.classList.add("active");
+
         const selectedDate = e.target.dataset.date;
+        slotSection.style.display = "block";
         slotSelector.innerHTML =
           '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div>';
-        slotSection.style.display = "block";
-        bookBtn.disabled = true;
+        bookingBtn.disabled = true;
 
         try {
           const response = await fetch(
             `/api/slots-for-date?date=${selectedDate}`
           );
-          if (!response.ok) throw new Error("Gagal mengambil data slot");
           const slots = await response.json();
           slotSelector.innerHTML = "";
 
           if (slots.length > 0) {
+            // --- PERUBAHAN DI SINI ---
+            // Sekarang kita membuat <button>
             slots.forEach((slot) => {
-              const slotRadio = document.createElement("input");
-              slotRadio.type = "radio";
-              slotRadio.className = "btn-check slot-radio";
-              slotRadio.name = "slot_id";
-              slotRadio.id = `slot-${slot.id}`;
-              slotRadio.value = slot.id;
-              slotRadio.autocomplete = "off";
+              const slotButton = document.createElement("button");
+              slotButton.type = "button"; // Penting agar tidak submit form
+              slotButton.className = "btn btn-outline-primary slot-btn";
+              slotButton.textContent = slot.time;
+              slotButton.dataset.slotId = slot.id; // Simpan ID slot di data attribute
 
-              const slotLabel = document.createElement("label");
-              slotLabel.className = "btn btn-outline-success";
-              slotLabel.htmlFor = `slot-${slot.id}`;
-              slotLabel.textContent = slot.time;
-
-              slotSelector.appendChild(slotRadio);
-              slotSelector.appendChild(slotLabel);
+              slotSelector.appendChild(slotButton);
             });
           } else {
             slotSelector.innerHTML =
-              '<p class="text-muted">Tidak ada jam yang tersedia untuk tanggal ini.</p>';
+              '<p class="text-muted">Tidak ada jam tersedia pada tanggal ini.</p>';
           }
         } catch (error) {
-          console.error("Error:", error);
+          console.error("Error fetching slots:", error);
           slotSelector.innerHTML =
-            '<p class="text-danger">Terjadi kesalahan saat memuat jadwal.</p>';
+            '<p class="text-danger">Gagal memuat jadwal.</p>';
         }
       }
     });
 
-    slotSelector.addEventListener("change", function (e) {
-      if (e.target.classList.contains("slot-radio")) {
-        bookBtn.disabled = false;
-      }
-    });
-  });
+    slotSelector.addEventListener("click", function (e) {
+      // Cek apakah yang diklik adalah tombol jam
+      if (e.target.classList.contains("slot-btn")) {
+        // Hapus kelas 'active' dari semua tombol jam lainnya
+        slotSelector
+          .querySelectorAll(".slot-btn")
+          .forEach((btn) => btn.classList.remove("active"));
 
-  // Kode JavaScript untuk Riwayat Pemeriksaan (Accordion)
-  document.querySelectorAll(".history-toggle").forEach((button) => {
-    button.addEventListener("click", async function () {
-      const appointmentId = this.dataset.appointmentId;
-      const targetCollapseId = this.getAttribute("data-bs-target");
-      const detailsContainer = document.querySelector(
-        `${targetCollapseId} .record-details`
-      );
+        // Tambahkan kelas 'active' ke tombol yang baru diklik
+        e.target.classList.add("active");
 
-      if (detailsContainer.querySelector(".spinner-border")) {
-        try {
-          const response = await fetch(`/api/medical-record/${appointmentId}`);
-          if (!response.ok) throw new Error("Data tidak ditemukan");
+        // Simpan ID slot yang dipilih ke input tersembunyi
+        selectedSlotInput.value = e.target.dataset.slotId;
 
-          const data = await response.json();
-
-          detailsContainer.innerHTML = `
-                        <p><strong>Anamnesa (Keluhan):</strong><br>${data.anamnesa.replace(
-                          /\n/g,
-                          "<br>"
-                        )}</p>
-                        <hr>
-                        <p><strong>Diagnosa Dokter:</strong><br>${data.diagnosa.replace(
-                          /\n/g,
-                          "<br>"
-                        )}</p>
-                        <hr>
-                        <p><strong>Terapi / Anjuran:</strong><br>${data.terapi.replace(
-                          /\n/g,
-                          "<br>"
-                        )}</p>
-                    `;
-        } catch (error) {
-          detailsContainer.innerHTML =
-            '<p class="text-danger">Gagal memuat detail rekam medis.</p>';
-        }
+        // Aktifkan tombol booking
+        bookingBtn.disabled = false;
       }
     });
   });
