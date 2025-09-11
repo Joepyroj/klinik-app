@@ -1,37 +1,70 @@
-{% extends 'admin/model/edit.html' %} {# Kita timpa blok 'edit_form' untuk
-menambahkan detail pasien di atasnya #} {% block edit_form %} {# Tampilkan data
-pasien sebagai read-only #}
-<div class="card shadow-sm mb-4">
-  <div class="card-header">
-    <i class="fas fa-user-injured me-2"></i>
-    <strong>Data Pasien (Read-Only)</strong>
-  </div>
-  <div class="card-body">
-    <div class="row">
-      <div class="col-md-6">
-        <p><strong>Nama Pasien:</strong><br />{{ patient.nama }}</p>
+{% extends 'admin/custom_blank.html' %} {% block body %}
+<div class="row justify-content-center page-medical-record-edit">
+  <div class="col-lg-8">
+    {# 2. Header halaman #}
+    <h3><i class="fas fa-file-medical-alt me-2"></i>Rekam Medis Pasien</h3>
+    <hr />
+
+    {# 3. Tampilkan data pasien (Read-Only) seperti sebelumnya #}
+    <div class="card shadow-sm mb-4">
+      <div class="card-header">
+        <i class="fas fa-user-injured me-2"></i>
+        <strong>Data Pasien</strong>
       </div>
-      <div class="col-md-6">
-        <p><strong>No. Telepon:</strong><br />{{ patient.telepon or '-' }}</p>
-      </div>
-      <div class="col-md-6">
-        <p>
-          <strong>Tanggal Lahir:</strong><br />
-          {% if patient.tanggal_lahir %} {{ patient.tanggal_lahir.strftime('%d
-          %B %Y') }} ({{ patient.age }} tahun) {% else %} - {% endif %}
-        </p>
-      </div>
-      <div class="col-md-6">
-        <p>
-          <strong>Tujuan Kunjungan:</strong><br />{{ patient.tujuan or '-' }}
-        </p>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Nama:</strong><br />{{ patient.nama }}</p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>Telepon:</strong><br />{{ patient.telepon or '-' }}</p>
+          </div>
+          <div class="col-md-6">
+            <p>
+              <strong>Tgl Lahir:</strong><br />{% if patient.tanggal_lahir %}{{
+              patient.tanggal_lahir.strftime('%d %B %Y') }} ({{ patient.age }}
+              tahun){% else %}-{% endif %}
+            </p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>Tujuan:</strong><br />{{ patient.tujuan or '-' }}</p>
+          </div>
+        </div>
       </div>
     </div>
+
+    <form method="POST" action="">
+      {{ form.csrf_token }}
+
+      <div class="mb-3">
+        {{ form.anamnesa.label(class="form-label fw-bold") }} {{
+        form.anamnesa(class="form-control", rows="5") }}
+      </div>
+
+      <div class="mb-3">
+        {{ form.diagnosa.label(class="form-label fw-bold") }} {{
+        form.diagnosa(class="form-control", rows="5") }}
+      </div>
+
+      <div class="mb-3">
+        {{ form.terapi.label(class="form-label fw-bold") }} {{
+        form.terapi(class="form-control", rows="5") }}
+      </div>
+
+      <hr />
+
+      <div class="d-flex justify-content-end">
+        <a
+          href="{{ url_for('doctor_dashboard.index') }}"
+          class="btn btn-secondary me-2"
+        >
+          <i class="fas fa-times me-1"></i> Kembali
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save me-1"></i> Simpan Perubahan
+        </button>
+      </div>
+    </form>
   </div>
 </div>
-
-<hr />
-<h4 class="mb-3">Edit Rekam Medis</h4>
-
-{# Panggil form edit standar dari Flask-Admin (sekarang hanya berisi anamnesa,
-dll.) #} {{ super() }} {% endblock %}
+{% endblock %}

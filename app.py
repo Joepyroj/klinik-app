@@ -212,7 +212,6 @@ class SlotView(ModelView):
 
 
 class MedicalRecordView(ModelView):
-    # Kita tetap definisikan template dan form kolomnya
     edit_template = 'admin/medical_record_edit.html'
     form_columns = ['anamnesa', 'diagnosa', 'terapi']
     
@@ -223,18 +222,54 @@ class MedicalRecordView(ModelView):
     def is_accessible(self):
         return current_user.is_authenticated and current_user.role.value in ['admin', 'dokter']
 
-    # --- INI METODE KUSTOMISASI BARU YANG AMAN ---
-    # Kita hanya menimpa metode 'render' untuk menambahkan data ekstra
+    # --- KITA GANTI METODE RENDER DENGAN YANG LEBIH BAIK ---
+    def on_form_prefill(self, form, id):
+        # Metode ini lebih aman untuk mengisi data tambahan saat edit
+        model = self.get_one(id)
+        if model:
+            form.patient_name = model.patient.nama
+            form.patient_age = model.patient.age
+            # Anda bisa menambahkan data lain di sini jika perlu
+
+    # --- TAMBAHKAN METODE BARU INI UNTUK MENANGANI PEMBUATAN REKOD BARU ---
+    def create_model(self, form):
+        try:
+            # 1. Buat instance model kosong
+            model = self.model()
+            # 2. Isi dengan data dari form (anamnesa, diagnosa, terapi)
+            form.populate_obj(model)
+            
+            # 3. Ambil ID dari hidden input yang kita kirim
+            appointment_id = request.form.get('appointment')
+            patient_id = request.form.get('patient')
+
+            # 4. Validasi dan isi foreign key yang hilang
+            if not appointment_id or not patient_id:
+                flash('ID Janji Temu atau Pasien tidak valid.', 'danger')
+                return False
+            
+            model.appointment_id = int(appointment_id)
+            model.patient_id = int(patient_id)
+
+            # 5. Simpan model yang sudah lengkap ke database
+            self.session.add(model)
+            self._on_model_change(form, model, True)
+            self.session.commit()
+            return True # Beritahu Flask-Admin bahwa proses berhasil
+
+        except Exception as ex:
+            if not self.handle_view_exception(ex):
+                flash(f'Gagal membuat rekam medis. Error: {str(ex)}', 'error')
+            self.session.rollback()
+            return False
+
     def render(self, template, **kwargs):
-        # Kita hanya menambahkan data 'patient' saat template-nya adalah template edit
+        # Tambahkan data pasien saat berada di halaman edit
         if template == self.edit_template:
-            # Dapatkan model (rekam medis) dari argumen yang diberikan oleh Flask-Admin
             model = kwargs.get('model')
             if model:
-                # Tambahkan data pasien ke dalam argumen
                 kwargs['patient'] = model.patient
         
-        # Panggil metode render asli dengan argumen yang sudah dimodifikasi
         return super(MedicalRecordView, self).render(template, **kwargs)
 
 class DoctorDashboardView(BaseView):

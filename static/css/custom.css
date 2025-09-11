@@ -220,3 +220,30 @@ body {
 .flatpickr-day.has-slots:hover {
   background: #bce8f1;
 }
+
+.page-medical-record-edit .card-header {
+  background-color: #fff3cd; /* Kuning muda */
+  color: #856404;
+  border-bottom: 2px solid #ffeeba;
+}
+
+/* Ganti warna label form HANYA di halaman ini */
+.page-medical-record-edit .form-label {
+  color: #0056b3; /* Biru tua */
+}
+
+/* Ganti warna tombol simpan HANYA di halaman ini */
+.page-medical-record-edit .btn-primary {
+  background-color: #28a745; /* Hijau */
+  border-color: #28a745;
+}
+
+.page-medical-record-edit .btn-primary:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+
+/* Contoh: Menyembunyikan sesuatu HANYA di halaman ini */
+.page-medical-record-edit .footer-text {
+  display: none;
+}
