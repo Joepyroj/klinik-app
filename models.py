@@ -76,9 +76,21 @@ class Appointment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
     medical_record = db.relationship('MedicalRecord', backref='appointment', uselist=False)
-
-    # == TAMBAHKAN KOLOM INI ==
+    
+    # Kolom yang sudah ada
     checked_in = db.Column(db.Boolean, default=False, nullable=False)
+    
+    # TAMBAHAN BARU: Kolom berat badan dan tekanan darah
+    berat_badan = db.Column(db.Float, nullable=True)  # dalam kg
+    tekanan_darah_sistol = db.Column(db.Integer, nullable=True)  # mmHg
+    tekanan_darah_diastol = db.Column(db.Integer, nullable=True)  # mmHg
+
+    @property
+    def tekanan_darah_formatted(self):
+        """Format tekanan darah menjadi string seperti '120/80'"""
+        if self.tekanan_darah_sistol and self.tekanan_darah_diastol:
+            return f"{self.tekanan_darah_sistol}/{self.tekanan_darah_diastol}"
+        return "-"
 
 # Model untuk rekam medis
 class MedicalRecord(db.Model):

@@ -1,70 +1,67 @@
-{% extends 'admin/custom_blank.html' %} {% block body %}
-<div class="row justify-content-center page-medical-record-edit">
-  <div class="col-lg-8">
-    {# 2. Header halaman #}
-    <h3><i class="fas fa-file-medical-alt me-2"></i>Rekam Medis Pasien</h3>
-    <hr />
-
-    {# 3. Tampilkan data pasien (Read-Only) seperti sebelumnya #}
-    <div class="card shadow-sm mb-4">
-      <div class="card-header">
-        <i class="fas fa-user-injured me-2"></i>
-        <strong>Data Pasien</strong>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-6">
-            <p><strong>Nama:</strong><br />{{ patient.nama }}</p>
-          </div>
-          <div class="col-md-6">
-            <p><strong>Telepon:</strong><br />{{ patient.telepon or '-' }}</p>
-          </div>
-          <div class="col-md-6">
-            <p>
-              <strong>Tgl Lahir:</strong><br />{% if patient.tanggal_lahir %}{{
-              patient.tanggal_lahir.strftime('%d %B %Y') }} ({{ patient.age }}
-              tahun){% else %}-{% endif %}
-            </p>
-          </div>
-          <div class="col-md-6">
-            <p><strong>Tujuan:</strong><br />{{ patient.tujuan or '-' }}</p>
-          </div>
+{% extends 'admin/custom.html' %} {# Mengimpor makro dari Flask-Admin untuk
+merender form #} {% from 'admin/lib.html' import render_form_fields with context
+%} {# Blok utama yang akan diisi konten #} {% block page_body %} {# 1. FORM
+WRAPPER #}
+<form method="POST" action="">
+  {# --- BARIS INI DIHAPUS --- #} {# {{ form_errors(form) }} #} {# 2. BAGIAN
+  DATA PASIEN & VITAL SIGNS (TIDAK BISA DIEDIT) #}
+  <div class="card shadow-sm mb-4">
+    <div class="card-header">
+      <i class="fas fa-user-injured me-2"></i><strong>Data Pasien</strong>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <p><strong>Nama Pasien:</strong><br />{{ model.patient.nama }}</p>
+        </div>
+        <div class="col-md-4">
+          <p>
+            <strong>Telepon:</strong><br />{{ model.patient.telepon or '-' }}
+          </p>
+        </div>
+        <div class="col-md-4">
+          <p>
+            <strong>Tujuan Kunjungan:</strong><br />{{
+            model.appointment.patient.tujuan or '-' }}
+          </p>
+        </div>
+        <div class="col-md-4">
+          <p>
+            <strong>Berat Badan:</strong><br />{{ model.appointment.berat_badan
+            or '-' }} kg
+          </p>
+        </div>
+        <div class="col-md-4">
+          <p>
+            <strong>Tekanan Darah:</strong><br />{{
+            model.appointment.tekanan_darah_formatted }}
+          </p>
         </div>
       </div>
     </div>
-
-    <form method="POST" action="">
-      {{ form.csrf_token }}
-
-      <div class="mb-3">
-        {{ form.anamnesa.label(class="form-label fw-bold") }} {{
-        form.anamnesa(class="form-control", rows="5") }}
-      </div>
-
-      <div class="mb-3">
-        {{ form.diagnosa.label(class="form-label fw-bold") }} {{
-        form.diagnosa(class="form-control", rows="5") }}
-      </div>
-
-      <div class="mb-3">
-        {{ form.terapi.label(class="form-label fw-bold") }} {{
-        form.terapi(class="form-control", rows="5") }}
-      </div>
-
-      <hr />
-
-      <div class="d-flex justify-content-end">
-        <a
-          href="{{ url_for('doctor_dashboard.index') }}"
-          class="btn btn-secondary me-2"
-        >
-          <i class="fas fa-times me-1"></i> Kembali
-        </a>
-        <button type="submit" class="btn btn-primary">
-          <i class="fas fa-save me-1"></i> Simpan Perubahan
-        </button>
-      </div>
-    </form>
   </div>
-</div>
+
+  {# 3. BAGIAN FORM REKAM MEDIS (BISA DIEDIT) #}
+  <div class="card shadow-sm">
+    <div class="card-header">
+      <i class="fas fa-notes-medical me-2"></i
+      ><strong>Formulir Rekam Medis</strong>
+    </div>
+    <div class="card-body">
+      {# Perintah ini hanya akan merender field 'anamnesa', 'diagnosa', dan
+      'terapi' #} {{ render_form_fields(form) }}
+    </div>
+  </div>
+
+  {# 4. BAGIAN TOMBOL AKSI KUSTOM #}
+  <div class="mt-4">
+    <button type="submit" class="btn btn-primary" name="_save" value="Save">
+      <i class="fas fa-save me-1"></i> Simpan
+    </button>
+    <a href="{{ return_url }}" class="btn btn-secondary">
+      <i class="fas fa-times me-1"></i> Batal
+    </a>
+  </div>
+</form>
+
 {% endblock %}

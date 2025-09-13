@@ -763,17 +763,20 @@ def admin_logout():
     flash('Anda telah logout.', 'info')
     return redirect(url_for('admin_login'))
 
-@app.route('/admin/check-in/<int:appointment_id>')
+@app.route('/admin/check-in/<int:appointment_id>', methods=['POST'])
 @login_required
 def check_in_patient(appointment_id):
-    # Pastikan hanya resepsionis yang bisa mengakses
     if current_user.role.value != 'resepsionis':
         flash('Anda tidak memiliki akses untuk melakukan aksi ini.', 'danger')
         return redirect(url_for('admin.index'))
 
     appointment = Appointment.query.get_or_404(appointment_id)
+    
     if appointment:
         appointment.checked_in = True
+        appointment.berat_badan = request.form.get('berat_badan')
+        appointment.tekanan_darah_sistol = request.form.get('tekanan_darah_sistol')
+        appointment.tekanan_darah_diastol = request.form.get('tekanan_darah_diastol')
         db.session.commit()
         flash(f"Pasien '{appointment.patient.nama}' berhasil di check-in.", "success")
     else:
