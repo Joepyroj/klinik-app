@@ -407,3 +407,54 @@ body {
 .patient-dashboard-theme .next-appointment-card .fs-4 {
   font-size: 1.1rem !important; /* Perkecil ukuran font jam */
 }
+
+.running-text-container {
+  position: fixed; /* Membuat posisi tetap di layar */
+  bottom: 0; /* Menempel di bagian bawah */
+  left: 0; /* Menempel di sisi kiri */
+  width: 100%; /* Lebar penuh */
+  font-family: "Roboto", sans-serif; /* Terapkan font Roboto */
+  font-weight: 500; /* Sedikit lebih tebal dari normal */
+  font-size: 1rem; /* Sedikit lebih kecil agar rapi */
+  background-color: transparent;
+  color: #212529;
+  text-shadow: 0px 0px 5px rgba(255, 255, 255, 0.7);
+  padding: 0.5rem;
+  z-index: 1030; /* Memastikan posisinya di atas konten lain */
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
+  border-top: none;
+}
+
+.running-text-content {
+  display: inline-block;
+  padding-left: 100%;
+  margin: 0;
+  animation: marquee-animation 40s linear infinite;
+}
+
+/* Berhentikan animasi saat di-hover */
+.running-text-container:hover .running-text-content {
+  animation-play-state: paused;
+}
+
+/* Definisi animasi (biarkan sama) */
+@keyframes marquee-animation {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.marquee-text {
+  vertical-align: middle;
+}
+
+/* Aturan untuk jarak pemisah */
+.marquee-separator {
+  display: inline-block; /* Wajib agar bisa diberi lebar */
+  width: 80px; /* Atur jarak di sini. Ganti angkanya sesuai selera */
+}
