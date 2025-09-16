@@ -5,6 +5,49 @@
     font-weight: 500;
     color: #212529;
   }
+
+  .history-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .history-item {
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-left: 3px solid transparent;
+  }
+
+  .history-item:hover {
+    background-color: #f8f9fa;
+    border-left-color: #007bff;
+  }
+
+  .history-item.active {
+    background-color: #e3f2fd;
+    border-left-color: #0d6efd;
+  }
+
+  .medical-record-content {
+    min-height: 400px;
+  }
+
+  .record-section {
+    margin-bottom: 1rem;
+  }
+
+  .record-section label {
+    font-weight: 600;
+    color: #495057;
+  }
+
+  .record-display {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    min-height: 80px;
+    white-space: pre-wrap;
+  }
 </style>
 
 <div class="container-fluid mt-2">
@@ -146,7 +189,7 @@
 </div>
 
 {# ===================================================================== #} {#
-MODAL / POP-UP UNTUK FORM REKAM MEDIS #} {#
+MODAL REKAM MEDIS YANG DIUPDATE #} {#
 ===================================================================== #} {% if
 pasien_diperiksa %}
 <div
@@ -156,7 +199,7 @@ pasien_diperiksa %}
   aria-labelledby="rekamMedisModalLabel"
   aria-hidden="true"
 >
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="rekamMedisModalLabel">
@@ -170,79 +213,241 @@ pasien_diperiksa %}
         ></button>
       </div>
       <div class="modal-body">
-        <div class="row mb-3">
-          <div class="col-md-6">
-            <strong>Telepon:</strong> {{ pasien_diperiksa.patient.telepon or '-'
-            }}
+        {# Informasi Pasien #}
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <strong>Telepon:</strong><br />
+            {{ pasien_diperiksa.patient.telepon or '-' }}
           </div>
-          <div class="col-md-6">
-            <strong>Tgl Lahir:</strong>
+          <div class="col-md-3">
+            <strong>Tgl Lahir:</strong><br />
             {% if pasien_diperiksa.patient.tanggal_lahir %} {{
             pasien_diperiksa.patient.tanggal_lahir.strftime('%d %b %Y') }} ({{
             pasien_diperiksa.patient.age }} tahun) {% else %} - {% endif %}
           </div>
-        </div>
-        <div class="row mb-3">
-          <div class="col-md-6">
-            <strong>Berat Badan:</strong> {{ pasien_diperiksa.berat_badan or '-'
-            }} kg
+          <div class="col-md-3">
+            <strong>Berat Badan:</strong><br />
+            {{ pasien_diperiksa.berat_badan or '-' }} kg
           </div>
-          <div class="col-md-6">
-            <strong>Tekanan Darah:</strong> {{
-            pasien_diperiksa.tekanan_darah_formatted }}
+          <div class="col-md-3">
+            <strong>Tekanan Darah:</strong><br />
+            {{ pasien_diperiksa.tekanan_darah_formatted }}
           </div>
         </div>
-        <p class="mb-3">
+
+        <div class="mb-4">
           <strong>Tujuan:</strong> {{ pasien_diperiksa.patient.tujuan or '-' }}
-        </p>
+        </div>
+
         <hr />
 
-        <form
-          id="formRekamMedis"
-          method="POST"
-          action="{{ url_for('medicalrecord.create_view', url=url_for('doctor_dashboard.index')) }}"
-        >
-          <input
-            type="hidden"
-            name="appointment"
-            value="{{ pasien_diperiksa.id }}"
-          />
-          <input
-            type="hidden"
-            name="patient"
-            value="{{ pasien_diperiksa.patient_id }}"
-          />
-          <div class="mb-3">
-            <label for="anamnesa" class="form-label">Anamnesa</label>
-            <textarea name="anamnesa" class="form-control" rows="4"></textarea>
+        <div class="row">
+          {# KOLOM KIRI: RIWAYAT REKAM MEDIS #}
+          <div class="col-md-4">
+            <h6 class="mb-3">
+              <i class="fas fa-history me-2"></i>Riwayat Rekam Medis
+            </h6>
+
+            {# Tombol untuk form baru hari ini #}
+            <div class="mb-2">
+              <button
+                class="btn btn-success btn-sm w-100 history-item"
+                id="newRecordBtn"
+                onclick="showNewRecordForm()"
+              >
+                <i class="fas fa-plus me-1"></i>
+                Rekam Medis Baru - {{ now.strftime('%d %b %Y') }}
+              </button>
+            </div>
+
+            {# Container untuk daftar riwayat #}
+            <div class="history-list" id="historyList">
+              <div class="text-center py-3" id="history-loader">
+                <div class="spinner-border spinner-border-sm" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-2 small">Memuat riwayat...</div>
+              </div>
+            </div>
           </div>
-          <div class="mb-3">
-            <label for="diagnosa" class="form-label">Diagnosa</label>
-            <textarea
-              name="diagnosa"
-              class="form-control"
-              rows="4"
-              required
-            ></textarea>
+
+          {# KOLOM KANAN: KONTEN REKAM MEDIS #}
+          <div class="col-md-8">
+            <div class="medical-record-content" id="recordContent">
+              {# Form untuk rekam medis baru akan ditampilkan di sini #}
+              <div class="text-center text-muted py-5" id="defaultContent">
+                <i class="fas fa-arrow-left fa-2x mb-3"></i>
+                <h6>Pilih "Rekam Medis Baru" untuk membuat catatan hari ini</h6>
+                <p>
+                  atau klik salah satu tanggal di riwayat untuk melihat rekam
+                  medis sebelumnya
+                </p>
+              </div>
+            </div>
           </div>
-          <div class="mb-3">
-            <label for="terapi" class="form-label">Terapi / Anjuran</label>
-            <textarea name="terapi" class="form-control" rows="4"></textarea>
-          </div>
-        </form>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          Batal
+          Tutup
         </button>
-        <button type="submit" form="formRekamMedis" class="btn btn-primary">
+        <button
+          type="submit"
+          form="formRekamMedis"
+          class="btn btn-primary"
+          id="saveButton"
+          style="display: none"
+        >
           <i class="fas fa-save me-1"></i> Simpan Rekam Medis
         </button>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  let patientHistory = [];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const rekamMedisModal = document.getElementById('rekamMedisModal');
+
+    // Event saat modal akan ditampilkan
+    rekamMedisModal.addEventListener('show.bs.modal', async function (event) {
+      const patientId = {{ pasien_diperiksa.patient.id }};
+      await loadPatientHistory(patientId);
+    });
+  });
+
+  async function loadPatientHistory(patientId) {
+    const historyList = document.getElementById('historyList');
+    const loader = document.getElementById('history-loader');
+
+    try {
+      const response = await fetch(`/api/patient/${patientId}/history`);
+      if (!response.ok) throw new Error('Gagal memuat riwayat');
+
+      patientHistory = await response.json();
+      loader.style.display = 'none';
+
+      // Tampilkan riwayat
+      let historyHtml = '';
+      if (patientHistory.length > 0) {
+        patientHistory.forEach((record, index) => {
+          historyHtml += `
+            <div class="history-item mb-1" onclick="showHistoryRecord(${index})">
+              <div class="card card-body py-2">
+                <small class="fw-bold">
+                  <i class="fas fa-calendar-alt me-1"></i>
+                  ${record.tanggal_periksa}
+                </small>
+                <small class="text-muted">
+                  ${record.diagnosa.length > 50 ? record.diagnosa.substring(0, 50) + '...' : record.diagnosa}
+                </small>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        historyHtml = '<div class="text-center text-muted py-3"><small>Belum ada riwayat</small></div>';
+      }
+
+      historyList.innerHTML = historyHtml;
+
+    } catch (error) {
+      console.error("Error:", error);
+      loader.style.display = 'none';
+      historyList.innerHTML = '<div class="text-center text-danger py-3"><small>Gagal memuat riwayat</small></div>';
+    }
+  }
+
+  function showNewRecordForm() {
+    // Reset active state
+    document.querySelectorAll('.history-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    document.getElementById('newRecordBtn').classList.add('active');
+
+    // Tampilkan form baru
+    const content = document.getElementById('recordContent');
+    content.innerHTML = `
+      <h6 class="mb-3">
+        <i class="fas fa-file-medical-alt me-2"></i>
+        Rekam Medis Baru - {{ now.strftime('%d %B %Y') }}
+      </h6>
+
+      <form id="formRekamMedis" method="POST" action="{{ url_for('medicalrecord.create_view', url=url_for('doctor_dashboard.index')) }}">
+        <input type="hidden" name="appointment" value="{{ pasien_diperiksa.id }}" />
+        <input type="hidden" name="patient" value="{{ pasien_diperiksa.patient_id }}" />
+
+        <div class="record-section">
+          <label for="anamnesa" class="form-label">Anamnesa</label>
+          <textarea name="anamnesa" class="form-control" rows="3" placeholder="Masukkan keluhan dan gejala pasien..."></textarea>
+        </div>
+
+        <div class="record-section">
+          <label for="diagnosa" class="form-label">Diagnosa <span class="text-danger">*</span></label>
+          <textarea name="diagnosa" class="form-control" rows="3" required placeholder="Masukkan diagnosis..."></textarea>
+        </div>
+
+        <div class="record-section">
+          <label for="terapi" class="form-label">Terapi / Anjuran</label>
+          <textarea name="terapi" class="form-control" rows="3" placeholder="Masukkan terapi dan anjuran untuk pasien..."></textarea>
+        </div>
+      </form>
+    `;
+
+    // Tampilkan tombol simpan
+    document.getElementById('saveButton').style.display = 'inline-block';
+  }
+
+  function showHistoryRecord(index) {
+    // Reset active state
+    document.querySelectorAll('.history-item').forEach(item => {
+      item.classList.remove('active');
+    });
+
+    // Set active pada item yang diklik
+    document.querySelectorAll('.history-item')[index + 1].classList.add('active'); // +1 karena index 0 adalah tombol "Baru"
+
+    const record = patientHistory[index];
+
+    // Tampilkan data rekam medis
+    const content = document.getElementById('recordContent');
+    content.innerHTML = `
+      <h6 class="mb-3">
+        <i class="fas fa-eye me-2"></i>
+        Rekam Medis - ${record.tanggal_periksa}
+      </h6>
+
+      <div class="record-section">
+        <label class="form-label">Anamnesa</label>
+        <div class="record-display">${record.anamnesa}</div>
+      </div>
+
+      <div class="record-section">
+        <label class="form-label">Diagnosa</label>
+        <div class="record-display">${record.diagnosa}</div>
+      </div>
+
+      <div class="record-section">
+        <label class="form-label">Terapi / Anjuran</label>
+        <div class="record-display">${record.terapi}</div>
+      </div>
+
+      <div class="mt-4">
+        <a href="{{ url_for('medicalrecord.edit_view', id='RECORD_ID', url=url_for('doctor_dashboard.index')) }}"
+           class="btn btn-outline-primary btn-sm">
+          <i class="fas fa-edit me-1"></i>Edit Rekam Medis
+        </a>
+      </div>
+    `.replace('RECORD_ID', record.id);
+
+    // Sembunyikan tombol simpan
+    document.getElementById('saveButton').style.display = 'none';
+  }
+</script>
 {% endif %}
+
 <div class="running-text-container">
   <div class="running-text-content">
     {# Tulisan Pertama #}

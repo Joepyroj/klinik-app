@@ -94,23 +94,280 @@ block page_header %}{% endblock %} {% block brand %}
   </li>
   {% endif %}
 </ul>
-{% endblock %} {% block body %}
-<div class="container-fluid mt-3">
-  {% with messages = get_flashed_messages(with_categories=true) %} {% if
-  messages %} {% for category, message in messages %}
-  <div
-    class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
-    role="alert"
-  >
-    {{ message }}
-    <button
-      type="button"
-      class="btn-close"
-      data-bs-dismiss="alert"
-      aria-label="Close"
-    ></button>
-  </div>
-  {% endfor %} {% endif %} {% endwith %}
-</div>
-{% block page_body %}{% endblock %} {% endblock %} {% block tail %} {{ super()
-}} {% endblock %}
+{% endblock %} {% block body %} {% block page_body %}{% endblock %} {% endblock
+%} {% block tail %} {{ super() }}
+<script>
+  function initializeScheduleViewer() {
+    const dateSelector = document.getElementById("date-selector");
+    if (!dateSelector) return; // Keluar jika elemen tidak ditemukan
+
+    const slotDisplaySection = document.getElementById("slot-display-section");
+    const slotDisplayArea = document.getElementById("slot-display-area");
+    const selectedDateLabel = document.getElementById("selected-date-label");
+
+    dateSelector.addEventListener("click", async function (e) {
+      if (e.target.classList.contains("date-btn")) {
+        document
+          .querySelectorAll(".date-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        e.target.classList.add("active");
+
+        const selectedDate = e.target.dataset.date;
+        selectedDateLabel.textContent = e.target.textContent;
+        slotDisplaySection.style.display = "block";
+        slotDisplayArea.innerHTML =
+          '<div class="col-12 text-center"><div class="spinner-border spinner-border-sm"></div></div>';
+
+        try {
+          const response = await fetch(
+            `/api/slots-by-date?date=${selectedDate}`
+          );
+          const slots = await response.json();
+
+          slotDisplayArea.innerHTML = "";
+
+          if (slots.length > 0) {
+            slots.forEach((slot) => {
+              const isBooked = slot.is_booked;
+              const cardBorder = isBooked ? "border-danger" : "border-success";
+              const textColor = isBooked ? "text-danger" : "text-success";
+              const icon = isBooked ? "fa-user-check" : "fa-check-circle";
+              const statusText = isBooked
+                ? slot.patient_name || "Booked"
+                : "Tersedia";
+
+              const slotHtml = `
+                  <div class="col-md-3 col-sm-6">
+                    <div class="card h-100 ${cardBorder}">
+                      <div class="card-body text-center p-2">
+                        <h5 class="card-title mb-1">${slot.time}</h5>
+                        <p class="card-text small ${textColor} mb-0">
+                          <i class="fas ${icon} me-1"></i>
+                          ${statusText}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              slotDisplayArea.insertAdjacentHTML("beforeend", slotHtml);
+            });
+          } else {
+            slotDisplayArea.innerHTML =
+              '<p class="text-muted col-12">Tidak ada slot pada tanggal ini.</p>';
+          }
+        } catch (error) {
+          console.error("Gagal memuat slot:", error);
+          slotDisplayArea.innerHTML =
+            '<p class="text-danger col-12">Gagal memuat data slot.</p>';
+        }
+      }
+    });
+  }
+</script>
+
+<script>
+  class FlashMessageManager {
+    constructor() {
+      this.config = {
+        success: 4000, // Success hilang dalam 4 detik
+        info: 5000, // Info hilang dalam 5 detik
+        warning: 7000, // Warning hilang dalam 7 detik (lebih penting)
+        danger: 10000, // Error hilang dalam 10 detik (sangat penting)
+        error: 10000, // Alias untuk danger
+      };
+
+      this.init();
+    }
+
+    init() {
+      document.addEventListener("DOMContentLoaded", () => {
+        this.processAlerts();
+      });
+
+      // Untuk alert yang ditambahkan secara dinamis
+      this.observeNewAlerts();
+    }
+
+    processAlerts() {
+      const alerts = document.querySelectorAll(
+        ".alert:not([data-auto-dismiss-processed])"
+      );
+
+      alerts.forEach((alert) => {
+        this.setupAutoDismiss(alert);
+      });
+    }
+
+    setupAutoDismiss(alert) {
+      // Tandai sebagai sudah diproses
+      alert.setAttribute("data-auto-dismiss-processed", "true");
+
+      // Tentukan durasi berdasarkan class alert
+      let duration = 5000; // default
+
+      if (alert.classList.contains("alert-success")) {
+        duration = this.config.success;
+      } else if (alert.classList.contains("alert-info")) {
+        duration = this.config.info;
+      } else if (alert.classList.contains("alert-warning")) {
+        duration = this.config.warning;
+      } else if (
+        alert.classList.contains("alert-danger") ||
+        alert.classList.contains("alert-error")
+      ) {
+        duration = this.config.danger;
+      }
+
+      // Jika alert memiliki attribute data-dismiss-time, gunakan itu
+      const customDuration = alert.getAttribute("data-dismiss-time");
+      if (customDuration) {
+        duration = parseInt(customDuration) * 1000;
+      }
+
+      // Jangan auto dismiss jika ada attribute data-no-auto-dismiss
+      if (alert.hasAttribute("data-no-auto-dismiss")) {
+        return;
+      }
+
+      this.addProgressBar(alert, duration);
+      this.setupDismissTimer(alert, duration);
+      this.addHoverPause(alert);
+    }
+
+    addProgressBar(alert, duration) {
+      const progressBar = document.createElement("div");
+      progressBar.className = "flash-progress-bar";
+      progressBar.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.8) 0%, 
+                rgba(255, 255, 255, 0.6) 50%, 
+                rgba(255, 255, 255, 0.4) 100%);
+            width: 100%;
+            transform-origin: left;
+            animation: flashCountdown ${duration}ms linear forwards;
+            z-index: 10;
+        `;
+
+      alert.style.position = "relative";
+      alert.style.overflow = "hidden";
+      alert.appendChild(progressBar);
+    }
+
+    setupDismissTimer(alert, duration) {
+      const timer = setTimeout(() => {
+        this.dismissAlert(alert);
+      }, duration);
+
+      // Simpan timer untuk bisa di-pause/resume
+      alert._dismissTimer = timer;
+      alert._dismissDuration = duration;
+      alert._dismissStartTime = Date.now();
+    }
+
+    dismissAlert(alert) {
+      // Fade out effect
+      alert.style.transition = "all 0.5s ease-out";
+      alert.style.opacity = "0";
+      alert.style.transform = "translateX(100%)";
+      alert.style.marginBottom = "0";
+      alert.style.maxHeight = "0";
+      alert.style.padding = "0";
+
+      // Remove dari DOM setelah animasi selesai
+      setTimeout(() => {
+        if (alert.parentNode) {
+          alert.parentNode.removeChild(alert);
+        }
+      }, 500);
+    }
+
+    addHoverPause(alert) {
+      let isPaused = false;
+      let remainingTime = 0;
+
+      alert.addEventListener("mouseenter", () => {
+        if (isPaused) return;
+
+        isPaused = true;
+        remainingTime =
+          alert._dismissDuration - (Date.now() - alert._dismissStartTime);
+
+        // Clear timer yang ada
+        clearTimeout(alert._dismissTimer);
+
+        // Pause progress bar animation
+        const progressBar = alert.querySelector(".flash-progress-bar");
+        if (progressBar) {
+          progressBar.style.animationPlayState = "paused";
+        }
+
+        // Tambah visual indicator bahwa sedang di-pause
+        alert.style.boxShadow = "0 0 0 2px rgba(0, 123, 255, 0.3)";
+      });
+
+      alert.addEventListener("mouseleave", () => {
+        if (!isPaused) return;
+
+        isPaused = false;
+
+        // Resume progress bar
+        const progressBar = alert.querySelector(".flash-progress-bar");
+        if (progressBar) {
+          progressBar.style.animationPlayState = "running";
+          // Update animation duration dengan sisa waktu
+          progressBar.style.animationDuration = `${remainingTime}ms`;
+        }
+
+        // Restart timer dengan sisa waktu
+        alert._dismissTimer = setTimeout(() => {
+          this.dismissAlert(alert);
+        }, remainingTime);
+
+        alert._dismissStartTime = Date.now();
+        alert._dismissDuration = remainingTime;
+
+        // Hapus visual indicator
+        alert.style.boxShadow = "";
+      });
+    }
+
+    observeNewAlerts() {
+      // Observer untuk alert yang ditambahkan secara dinamis (via AJAX)
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1) {
+              // Element node
+              if (node.classList && node.classList.contains("alert")) {
+                this.setupAutoDismiss(node);
+              }
+
+              // Cek juga di dalam node yang ditambahkan
+              const alerts =
+                node.querySelectorAll &&
+                node.querySelectorAll(
+                  ".alert:not([data-auto-dismiss-processed])"
+                );
+              if (alerts) {
+                alerts.forEach((alert) => this.setupAutoDismiss(alert));
+              }
+            }
+          });
+        });
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    }
+  }
+
+  // Inisialisasi
+  new FlashMessageManager();
+</script>
+{% endblock %}

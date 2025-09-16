@@ -1,5 +1,8 @@
 {# templates/_schedule_tool_content.html #}
 
+<!-- Area untuk notifikasi -->
+<div id="schedule-notification-area" class="mb-3"></div>
+
 <h2 class="mb-4">Alat Pengelola Jadwal</h2>
 
 <div class="card shadow-sm mb-4">
@@ -12,8 +15,10 @@
       secara otomatis. Sistem hanya akan membuat slot untuk hari Senin - Jumat.
     </p>
     <form
+      id="generate-slots-form"
       action="{{ url_for('scheduler.generate_slots_action') }}"
       method="POST"
+      onsubmit="return false;"
     >
       <div class="row g-3">
         <div class="col-md-6">
@@ -72,7 +77,12 @@
           />
         </div>
       </div>
-      <button type="submit" class="btn btn-primary mt-3">
+      <button
+        type="button"
+        class="btn btn-primary mt-3"
+        id="generate-btn"
+        onclick="submitGenerateForm()"
+      >
         <i class="fas fa-cogs me-2"></i>Generate Jadwal
       </button>
     </form>
@@ -91,8 +101,10 @@
           **belum dibooking** pada hari yang dipilih.
         </p>
         <form
+          id="shift-time-form"
           action="{{ url_for('scheduler.shift_time_action') }}"
           method="POST"
+          onsubmit="return false;"
         >
           <div class="mb-3">
             <label for="shift_date" class="form-label">Pilih Tanggal</label>
@@ -117,7 +129,12 @@
               required
             />
           </div>
-          <button type="submit" class="btn btn-warning">
+          <button
+            type="button"
+            class="btn btn-warning"
+            id="shift-btn"
+            onclick="submitShiftForm()"
+          >
             <i class="fas fa-history me-2"></i>Mundurkan Jam
           </button>
         </form>
@@ -137,8 +154,10 @@
           ada pasien yang terdaftar.
         </p>
         <form
+          id="reschedule-day-form"
           action="{{ url_for('scheduler.reschedule_day_action') }}"
           method="POST"
+          onsubmit="return false;"
         >
           <div class="mb-3">
             <label for="reschedule_date" class="form-label"
@@ -152,7 +171,12 @@
               required
             />
           </div>
-          <button type="submit" class="btn btn-danger">
+          <button
+            type="button"
+            class="btn btn-danger"
+            id="reschedule-btn"
+            onclick="submitRescheduleForm()"
+          >
             <i class="fas fa-calendar-times me-2"></i>Pindahkan Hari
           </button>
         </form>
@@ -160,3 +184,141 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Fungsi untuk menampilkan notifikasi
+  function showNotification(message, type = "success") {
+    console.log("Showing notification:", message, type);
+
+    const notificationArea = document.getElementById(
+      "schedule-notification-area"
+    );
+    if (!notificationArea) {
+      console.error("Notification area not found");
+      return;
+    }
+
+    // Hapus notifikasi sebelumnya
+    notificationArea.innerHTML = "";
+
+    const alertType = type === "success" ? "alert-success" : "alert-danger";
+    const iconType =
+      type === "success" ? "fa-check-circle" : "fa-exclamation-triangle";
+
+    const alertHtml = `
+        <div class="alert ${alertType} alert-dismissible fade show" role="alert">
+            <i class="fas ${iconType} me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+
+    notificationArea.innerHTML = alertHtml;
+
+    // Auto hide setelah 5 detik
+    setTimeout(() => {
+      const alert = notificationArea.querySelector(".alert");
+      if (alert && window.bootstrap && window.bootstrap.Alert) {
+        new bootstrap.Alert(alert).close();
+      }
+    }, 5000);
+  }
+
+  // Fungsi generik untuk submit form via AJAX
+  async function submitFormAjax(formId, buttonId, loadingText) {
+    const form = document.getElementById(formId);
+    const button = document.getElementById(buttonId);
+
+    if (!form || !button) {
+      console.error("Form atau button tidak ditemukan:", formId, buttonId);
+      return;
+    }
+
+    // Validasi form
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const originalButtonText = button.innerHTML;
+
+    // Disable button dan show loading
+    button.disabled = true;
+    button.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span>${loadingText}`;
+
+    try {
+      const formData = new FormData(form);
+      console.log("Submitting form:", formId, "to:", form.action);
+
+      const response = await fetch(form.action, {
+        method: "POST",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")
+            ? document
+                .querySelector("meta[name=csrf-token]")
+                .getAttribute("content")
+            : "",
+        },
+        body: formData,
+      });
+
+      console.log("Response status:", response.status);
+      console.log(
+        "Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
+      let result;
+      const contentType = response.headers.get("content-type");
+
+      if (contentType && contentType.includes("application/json")) {
+        result = await response.json();
+        console.log("JSON result:", result);
+
+        if (result.success) {
+          showNotification(result.message, "success");
+          form.reset(); // Reset form setelah sukses
+        } else {
+          showNotification(result.message, "error");
+        }
+      } else {
+        // Fallback untuk response non-JSON
+        const text = await response.text();
+        console.log("Non-JSON response received");
+
+        if (response.ok) {
+          showNotification("Operasi berhasil dilakukan!", "success");
+          form.reset();
+        } else {
+          showNotification("Terjadi kesalahan pada server.", "error");
+        }
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      showNotification("Terjadi kesalahan jaringan: " + error.message, "error");
+    } finally {
+      // Restore button
+      button.disabled = false;
+      button.innerHTML = originalButtonText;
+    }
+  }
+
+  // Functions yang dipanggil onclick
+  function submitGenerateForm() {
+    console.log("Generate form submit clicked");
+    submitFormAjax("generate-slots-form", "generate-btn", "Generating...");
+  }
+
+  function submitShiftForm() {
+    console.log("Shift form submit clicked");
+    submitFormAjax("shift-time-form", "shift-btn", "Memproses...");
+  }
+
+  function submitRescheduleForm() {
+    console.log("Reschedule form submit clicked");
+    submitFormAjax("reschedule-day-form", "reschedule-btn", "Memproses...");
+  }
+
+  // Inisialisasi saat script dimuat
+  console.log("Schedule Tool Script Loaded Successfully");
+</script>

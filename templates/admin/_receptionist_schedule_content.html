@@ -27,7 +27,7 @@
 
 <div class="card shadow-sm">
   <div class="card-header card-header-custom">
-    <i class="fas fa-calendar-alt me-2"></i>Lihat Jadwal Slot
+    <i class="fas fa-calendar-alt me-2"></i>Lihat Slot Waktu Mendatang
   </div>
   <div class="card-body">
     <h6>Pilih Tanggal</h6>
@@ -40,15 +40,23 @@
         {{ d.strftime('%a, %d %b') }}
       </button>
       {% else %}
-      <p class="text-muted">
-        Belum ada slot yang dibuat untuk hari-hari mendatang.
-      </p>
+      <p class="text-muted">Tidak ada jadwal mendatang yang dibuat.</p>
       {% endfor %}
     </div>
-    <div id="slot-section" style="display: none">
-      <hr />
-      <h6>Detail Jam pada Tanggal Terpilih</h6>
-      <div id="slot-display" class="d-flex flex-wrap"></div>
+
+    <hr />
+
+    <div id="slot-display-section" style="display: none">
+      <h6 class="mb-3">
+        Detail Jam untuk Tanggal
+        <span id="selected-date-label" class="fw-bold"></span>
+      </h6>
+      <div id="slot-display-area" class="row g-2"></div>
     </div>
   </div>
 </div>
+
+<script>
+  // Panggil fungsi yang sudah kita siapkan di custom.html
+  initializeScheduleViewer();
+</script>

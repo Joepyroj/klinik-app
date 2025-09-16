@@ -17,6 +17,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user, login_user, logout_user, login_required
 from markupsafe import Markup
 from sqlalchemy import func
+from collections import defaultdict
 
 # Lokal imports
 from extensions import db, migrate, admin, bcrypt, login_manager, oauth
@@ -55,6 +56,7 @@ scheduler_bp = Blueprint('scheduler', __name__, url_prefix='/admin/scheduler')
 @scheduler_bp.route('/generate', methods=['POST'])
 @login_required
 def generate_slots_action():
+    
     try:
         start_date = datetime.strptime(request.form['start_date'], '%Y-%m-%d').date()
         end_date = datetime.strptime(request.form['end_date'], '%Y-%m-%d').date()
@@ -80,79 +82,181 @@ def generate_slots_action():
             current_date += timedelta(days=1)
             
         db.session.commit()
-        return jsonify({
-            'success': True,
-            'message': f"{generated_count} slot baru berhasil dibuat!"
-        })
+        message = f"{generated_count} slot baru berhasil dibuat!"
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
+        if is_ajax:
+            response_data = {
+                'success': True,
+                'message': message
+            }
+            
+        else:
+            flash(message, "success")
+            return redirect(url_for('schedule_tool.index'))
+            
     except Exception as e:
+        
         db.session.rollback()
-        return jsonify({'success': False, 'message': f'Terjadi kesalahan: {str(e)}'}), 500
+        
+        error_message = f'Terjadi kesalahan: {str(e)}'
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': error_message}), 500
+        else:
+            flash(error_message, 'danger')
+            return redirect(url_for('schedule_tool.index'))
 
 @scheduler_bp.route('/shift-time', methods=['POST'])
 @login_required
 def shift_time_action():
-    shift_date_str = request.form['shift_date']
-    minutes_to_shift = int(request.form['minutes_to_shift'])
+    print("=== SHIFT TIME DEBUG ===")
+    print(f"Request headers: {dict(request.headers)}")
+    print(f"Form data: {dict(request.form)}")
+    
+    try:
+        shift_date_str = request.form['shift_date']
+        minutes_to_shift = int(request.form['minutes_to_shift'])
 
-    shift_date = datetime.strptime(shift_date_str, '%Y-%m-%d').date()
-    start_of_day = datetime.combine(shift_date, datetime.min.time())
-    end_of_day = datetime.combine(shift_date, datetime.max.time())
+        shift_date = datetime.strptime(shift_date_str, '%Y-%m-%d').date()
+        start_of_day = datetime.combine(shift_date, datetime.min.time())
+        end_of_day = datetime.combine(shift_date, datetime.max.time())
 
-    slots_to_shift = Slot.query.filter(
-        Slot.start_time.between(start_of_day, end_of_day),
-        Slot.is_booked == False
-    ).order_by(Slot.start_time.asc()).all()
+        slots_to_shift = Slot.query.filter(
+            Slot.start_time.between(start_of_day, end_of_day),
+            Slot.is_booked == False
+        ).order_by(Slot.start_time.asc()).all()
 
-    shifted_count = 0
-    for slot in slots_to_shift:
-        slot.start_time += timedelta(minutes=minutes_to_shift)
-        shifted_count += 1
+        shifted_count = 0
+        for slot in slots_to_shift:
+            slot.start_time += timedelta(minutes=minutes_to_shift)
+            shifted_count += 1
 
-    db.session.commit()
-    flash(f"{shifted_count} slot pada tanggal {shift_date_str} berhasil dimundurkan.", "success")
-    return redirect(url_for('schedule_tool.index'))
+        db.session.commit()
+        
+        message = f"{shifted_count} slot pada tanggal {shift_date_str} berhasil dimundurkan."
+        print(f"Success: {message}")
+        
+        # Check if it's an AJAX request
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        print(f"Is AJAX request: {is_ajax}")
+        
+        if is_ajax:
+            return jsonify({
+                'success': True,
+                'message': message
+            })
+        else:
+            flash(message, "success")
+            return redirect(url_for('schedule_tool.index'))
+            
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        db.session.rollback()
+        
+        error_message = f'Terjadi kesalahan: {str(e)}'
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': error_message}), 500
+        else:
+            flash(error_message, 'danger')
+            return redirect(url_for('schedule_tool.index'))
 
 @scheduler_bp.route('/reschedule-day', methods=['POST'])
 @login_required
 def reschedule_day_action():
-    reschedule_date_str = request.form['reschedule_date']
-    reschedule_date = datetime.strptime(reschedule_date_str, '%Y-%m-%d').date()
+    print("=== RESCHEDULE DAY DEBUG ===")
+    print(f"Request headers: {dict(request.headers)}")
+    print(f"Form data: {dict(request.form)}")
+    
+    try:
+        reschedule_date_str = request.form['reschedule_date']
+        reschedule_date = datetime.strptime(reschedule_date_str, '%Y-%m-%d').date()
 
-    # Temukan hari kerja berikutnya
-    next_workday = reschedule_date + timedelta(days=1)
-    while next_workday.weekday() >= 5: # Lewati Sabtu (5) dan Minggu (6)
-        next_workday += timedelta(days=1)
+        # Temukan hari kerja berikutnya
+        next_workday = reschedule_date + timedelta(days=1)
+        while next_workday.weekday() >= 5:  # Lewati Sabtu (5) dan Minggu (6)
+            next_workday += timedelta(days=1)
 
-    start_of_day = datetime.combine(reschedule_date, datetime.min.time())
-    end_of_day = datetime.combine(reschedule_date, datetime.max.time())
+        start_of_day = datetime.combine(reschedule_date, datetime.min.time())
+        end_of_day = datetime.combine(reschedule_date, datetime.max.time())
 
-    slots_to_reschedule = Slot.query.filter(
-        Slot.start_time.between(start_of_day, end_of_day),
-        Slot.is_booked == False
-    ).all()
+        slots_to_reschedule = Slot.query.filter(
+            Slot.start_time.between(start_of_day, end_of_day),
+            Slot.is_booked == False
+        ).all()
 
-    # Cek apakah ada pasien yang sudah booking di hari itu
-    booked_appointments = Appointment.query.join(Slot).filter(
-        Slot.start_time.between(start_of_day, end_of_day)
-    ).count()
+        # Cek apakah ada pasien yang sudah booking di hari itu
+        booked_appointments = Appointment.query.join(Slot).filter(
+            Slot.start_time.between(start_of_day, end_of_day)
+        ).count()
 
-    if booked_appointments > 0:
-        flash(f"Tidak bisa memundurkan hari. Terdapat {booked_appointments} pasien yang sudah terdaftar pada tanggal {reschedule_date_str}. Harap batalkan manual.", "danger")
-        return redirect(url_for('scheduler.index'))
+        if booked_appointments > 0:
+            message = f"Tidak bisa memundurkan hari. Terdapat {booked_appointments} pasien yang sudah terdaftar pada tanggal {reschedule_date_str}. Harap batalkan manual."
+            print(f"Error: {message}")
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'message': message})
+            else:
+                flash(message, "danger")
+                return redirect(url_for('schedule_tool.index'))
 
-    rescheduled_count = 0
-    for slot in slots_to_reschedule:
-        # Pindahkan ke hari kerja berikutnya dengan jam yang sama
-        slot.start_time = slot.start_time.replace(
-            year=next_workday.year, 
-            month=next_workday.month, 
-            day=next_workday.day
-        )
-        rescheduled_count += 1
+        rescheduled_count = 0
+        for slot in slots_to_reschedule:
+            # Pindahkan ke hari kerja berikutnya dengan jam yang sama
+            slot.start_time = slot.start_time.replace(
+                year=next_workday.year, 
+                month=next_workday.month, 
+                day=next_workday.day
+            )
+            rescheduled_count += 1
 
-    db.session.commit()
-    flash(f"{rescheduled_count} slot dari tanggal {reschedule_date_str} berhasil dipindahkan ke {next_workday.strftime('%Y-%m-%d')}.", "success")
-    return redirect(url_for('schedule_tool.index'))
+        db.session.commit()
+        
+        success_message = f"{rescheduled_count} slot dari tanggal {reschedule_date_str} berhasil dipindahkan ke {next_workday.strftime('%Y-%m-%d')}."
+        print(f"Success: {success_message}")
+        
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        print(f"Is AJAX request: {is_ajax}")
+        
+        if is_ajax:
+            return jsonify({'success': True, 'message': success_message})
+        else:
+            flash(success_message, "success")
+            return redirect(url_for('schedule_tool.index'))
+            
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        db.session.rollback()
+        
+        error_message = f'Terjadi kesalahan: {str(e)}'
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': error_message}), 500
+        else:
+            flash(error_message, 'danger')
+            return redirect(url_for('schedule_tool.index'))
+        
+class ViewSlotsView(BaseView):
+    @expose('/')
+    def index(self):
+        # Ambil semua slot yang akan datang (belum lewat)
+        upcoming_slots = Slot.query.filter(
+            Slot.start_time >= datetime.now()
+        ).order_by(Slot.start_time.asc()).all()
+
+        # Kelompokkan slot berdasarkan tanggal
+        slots_by_date = defaultdict(list)
+        for slot in upcoming_slots:
+            slots_by_date[slot.start_time.date()].append(slot)
+
+        return self.render('_view_slots_content.html', slots_by_date=slots_by_date)
+
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.role.value in ['admin', 'resepsionis']
+
+    def is_visible(self):
+        return False # Sembunyikan dari menu utama Flask-Admin
 
 class MyAdminIndexView(AdminIndexView):
     @expose('/')
@@ -783,6 +887,30 @@ def check_in_patient(appointment_id):
         flash("Janji temu tidak ditemukan.", "danger")
         
     return redirect(url_for('receptionist.index'))
+
+@app.route('/api/patient/<int:patient_id>/history')
+@login_required
+def get_patient_history(patient_id):
+    """API endpoint untuk mengambil riwayat rekam medis pasien"""
+    # Pastikan hanya dokter yang bisa mengakses
+    if current_user.role.value != 'dokter':
+        return jsonify({"error": "Akses ditolak"}), 403
+    
+    # Ambil semua rekam medis pasien, urutkan dari yang terbaru
+    medical_records = MedicalRecord.query.filter_by(patient_id=patient_id)\
+        .order_by(MedicalRecord.tanggal_periksa.desc()).all()
+    
+    history_data = []
+    for record in medical_records:
+        history_data.append({
+            'id': record.id,
+            'tanggal_periksa': record.tanggal_periksa.strftime('%d %B %Y'),
+            'anamnesa': record.anamnesa or '-',
+            'diagnosa': record.diagnosa or '-',
+            'terapi': record.terapi or '-'
+        })
+    
+    return jsonify(history_data)
 
 
 # =======================================================================

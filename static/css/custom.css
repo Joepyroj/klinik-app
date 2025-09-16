@@ -458,3 +458,61 @@ body {
   display: inline-block; /* Wajib agar bisa diberi lebar */
   width: 80px; /* Atur jarak di sini. Ganti angkanya sesuai selera */
 }
+
+@keyframes flashCountdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* Styling untuk flash messages */
+.alert {
+  margin-bottom: 1rem;
+  border-radius: 0.375rem;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Hover effect */
+.alert:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Improve close button visibility */
+.alert .btn-close {
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.alert .btn-close:hover {
+  opacity: 1;
+}
+
+/* Custom colors with better contrast */
+.alert-success {
+  background-color: #d1e7dd;
+  border-color: #badbcc;
+  color: #0f5132;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  border-color: #f5c2c7;
+  color: #842029;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffecb5;
+  color: #664d03;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  border-color: #b8daff;
+  color: #055160;
+}
