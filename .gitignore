@@ -7,9 +7,14 @@ __pycache__/
 
 # Instance folder (termasuk database)
 instance/
+backups/
+klinik-venv/
+clinic.db
 
 # File environment (jika ada)
 .env
+backup_script.sh
+restore_script.sh
 
 # VS Code settings
 .vscode/

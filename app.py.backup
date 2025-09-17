@@ -91,66 +91,26 @@ def generate_slots_action():
 @scheduler_bp.route('/shift-time', methods=['POST'])
 @login_required
 def shift_time_action():
-    try:
-        shift_date_str = request.form.get('shift_date')
-        minutes_to_shift_raw = request.form.get('minutes_to_shift')
-        if not shift_date_str or not minutes_to_shift_raw:
-            return jsonify({'success': False, 'message': 'Tanggal dan menit wajib diisi.'}), 400
-        try:
-            minutes_to_shift = int(minutes_to_shift_raw)
-        except ValueError:
-            return jsonify({'success': False, 'message': 'Format menit tidak valid.'}), 400
-        if minutes_to_shift == 0:
-            return jsonify({'success': False, 'message': 'Menit pergeseran tidak boleh 0.'}), 400
-        if abs(minutes_to_shift) > 24 * 60:
-            return jsonify({'success': False, 'message': 'Menit terlalu besar. Maksimal 1440.'}), 400
+    shift_date_str = request.form['shift_date']
+    minutes_to_shift = int(request.form['minutes_to_shift'])
 
-        shift_date = datetime.strptime(shift_date_str, '%Y-%m-%d').date()
-        start_of_day = datetime.combine(shift_date, datetime.min.time())
-        end_of_day = datetime.combine(shift_date, datetime.max.time())
+    shift_date = datetime.strptime(shift_date_str, '%Y-%m-%d').date()
+    start_of_day = datetime.combine(shift_date, datetime.min.time())
+    end_of_day = datetime.combine(shift_date, datetime.max.time())
 
-        # Ambil slot yang belum dibooking di tanggal tersebut
-        slots_to_shift = Slot.query.filter(
-            Slot.start_time.between(start_of_day, end_of_day),
-            Slot.is_booked == False
-        ).order_by(Slot.start_time.asc()).all()
+    slots_to_shift = Slot.query.filter(
+        Slot.start_time.between(start_of_day, end_of_day),
+        Slot.is_booked == False
+    ).order_by(Slot.start_time.asc()).all()
 
-        if not slots_to_shift:
-            return jsonify({'success': True, 'message': f'Tidak ada slot yang diubah untuk {shift_date_str}.'})
+    shifted_count = 0
+    for slot in slots_to_shift:
+        slot.start_time += timedelta(minutes=minutes_to_shift)
+        shifted_count += 1
 
-        # Kumpulkan semua waktu target baru
-        target_times = []
-        for slot in slots_to_shift:
-            target_times.append(slot.start_time + timedelta(minutes=minutes_to_shift))
-
-        # Cek konflik dengan slot apapun (termasuk yang dibooking) di hari target
-        min_target = min(target_times)
-        max_target = max(target_times)
-        existing_at_targets = Slot.query.filter(
-            Slot.start_time.between(min_target.replace(hour=0, minute=0, second=0, microsecond=0),
-                                    max_target.replace(hour=23, minute=59, second=59, microsecond=999999))
-        ).all()
-        existing_times_set = {s.start_time for s in existing_at_targets}
-
-        # Jika ada target time sudah dipakai oleh slot lain (apa pun statusnya), batalkan aman
-        for t in target_times:
-            if t in existing_times_set:
-                return jsonify({'success': False, 'message': 'Pergeseran dibatalkan: terdapat konflik waktu dengan slot lain.'}), 409
-
-        # Jalankan pergeseran
-        shifted_count = 0
-        for slot in slots_to_shift:
-            slot.start_time += timedelta(minutes=minutes_to_shift)
-            shifted_count += 1
-
-        db.session.commit()
-        return jsonify({
-            'success': True,
-            'message': f"{shifted_count} slot pada tanggal {shift_date_str} berhasil dimundurkan."
-        })
-    except Exception as ex:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': f'Kesalahan server: {str(ex)}'}), 500
+    db.session.commit()
+    flash(f"{shifted_count} slot pada tanggal {shift_date_str} berhasil dimundurkan.", "success")
+    return redirect(url_for('schedule_tool.index'))
 
 @scheduler_bp.route('/reschedule-day', methods=['POST'])
 @login_required
@@ -177,10 +137,8 @@ def reschedule_day_action():
     ).count()
 
     if booked_appointments > 0:
-        return jsonify({
-            'success': False,
-            'message': f"Tidak bisa memundurkan hari. Terdapat {booked_appointments} pasien yang sudah terdaftar pada tanggal {reschedule_date_str}. Harap batalkan manual."
-        }), 400
+        flash(f"Tidak bisa memundurkan hari. Terdapat {booked_appointments} pasien yang sudah terdaftar pada tanggal {reschedule_date_str}. Harap batalkan manual.", "danger")
+        return redirect(url_for('scheduler.index'))
 
     rescheduled_count = 0
     for slot in slots_to_reschedule:
@@ -193,10 +151,8 @@ def reschedule_day_action():
         rescheduled_count += 1
 
     db.session.commit()
-    return jsonify({
-        'success': True,
-        'message': f"{rescheduled_count} slot dari tanggal {reschedule_date_str} berhasil dipindahkan ke {next_workday.strftime('%Y-%m-%d')}."
-    })
+    flash(f"{rescheduled_count} slot dari tanggal {reschedule_date_str} berhasil dipindahkan ke {next_workday.strftime('%Y-%m-%d')}.", "success")
+    return redirect(url_for('schedule_tool.index'))
 
 class MyAdminIndexView(AdminIndexView):
     @expose('/')

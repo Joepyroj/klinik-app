@@ -11,9 +11,11 @@
       Gunakan form ini untuk membuat jadwal praktik untuk beberapa hari ke depan
       secara otomatis. Sistem hanya akan membuat slot untuk hari Senin - Jumat.
     </p>
+    <div id="schedule-tool-alert" class="alert d-none" role="alert"></div>
     <form
       action="{{ url_for('scheduler.generate_slots_action') }}"
       method="POST"
+      id="generate-slots-form"
     >
       <div class="row g-3">
         <div class="col-md-6">
@@ -72,7 +74,7 @@
           />
         </div>
       </div>
-      <button type="submit" class="btn btn-primary mt-3">
+      <button type="submit" class="btn btn-primary mt-3" id="generate-submit-btn">
         <i class="fas fa-cogs me-2"></i>Generate Jadwal
       </button>
     </form>
@@ -90,9 +92,11 @@
           Jika dokter terlambat, gunakan ini untuk memundurkan semua slot yang
           **belum dibooking** pada hari yang dipilih.
         </p>
+        <div id="shift-alert" class="alert d-none" role="alert"></div>
         <form
           action="{{ url_for('scheduler.shift_time_action') }}"
           method="POST"
+          id="shift-time-form"
         >
           <div class="mb-3">
             <label for="shift_date" class="form-label">Pilih Tanggal</label>
@@ -117,7 +121,7 @@
               required
             />
           </div>
-          <button type="submit" class="btn btn-warning">
+          <button type="submit" class="btn btn-warning" id="shift-submit-btn">
             <i class="fas fa-history me-2"></i>Mundurkan Jam
           </button>
         </form>
@@ -136,9 +140,11 @@
           dibooking** ke hari kerja berikutnya. Aksi ini akan gagal jika sudah
           ada pasien yang terdaftar.
         </p>
+        <div id="reschedule-alert" class="alert d-none" role="alert"></div>
         <form
           action="{{ url_for('scheduler.reschedule_day_action') }}"
           method="POST"
+          id="reschedule-day-form"
         >
           <div class="mb-3">
             <label for="reschedule_date" class="form-label"
@@ -152,7 +158,7 @@
               required
             />
           </div>
-          <button type="submit" class="btn btn-danger">
+          <button type="submit" class="btn btn-danger" id="reschedule-submit-btn">
             <i class="fas fa-calendar-times me-2"></i>Pindahkan Hari
           </button>
         </form>
@@ -160,3 +166,133 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('generate-slots-form');
+    const submitBtn = document.getElementById('generate-submit-btn');
+    const alertBox = document.getElementById('schedule-tool-alert');
+
+    if (form) {
+      const showAlert = (message, type = 'success') => {
+        alertBox.className = 'alert';
+        alertBox.classList.add(type === 'success' ? 'alert-success' : 'alert-danger');
+        alertBox.textContent = message;
+        alertBox.classList.remove('d-none');
+        setTimeout(() => {
+          alertBox.classList.add('d-none');
+        }, 5000);
+      };
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        submitBtn.disabled = true;
+        const original = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
+
+        try {
+          const response = await fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+          });
+          const result = await response.json();
+          if (response.ok && result.success) {
+            showAlert(result.message, 'success');
+            form.reset();
+          } else {
+            showAlert(result.message || 'Gagal membuat slot.', 'danger');
+          }
+        } catch (err) {
+          showAlert('Kesalahan jaringan.', 'danger');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = original;
+        }
+      });
+    }
+
+    // Shift time AJAX
+    const shiftForm = document.getElementById('shift-time-form');
+    const shiftBtn = document.getElementById('shift-submit-btn');
+    const shiftAlert = document.getElementById('shift-alert');
+
+    if (shiftForm) {
+      const showShiftAlert = (message, type = 'success') => {
+        shiftAlert.className = 'alert';
+        shiftAlert.classList.add(type === 'success' ? 'alert-success' : 'alert-danger');
+        shiftAlert.textContent = message;
+        shiftAlert.classList.remove('d-none');
+        setTimeout(() => {
+          shiftAlert.classList.add('d-none');
+        }, 5000);
+      };
+
+      shiftForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        shiftBtn.disabled = true;
+        const original = shiftBtn.innerHTML;
+        shiftBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+        try {
+          const response = await fetch(shiftForm.action, {
+            method: 'POST',
+            body: new FormData(shiftForm),
+          });
+          const result = await response.json();
+          if (response.ok && result.success) {
+            showShiftAlert(result.message, 'success');
+            shiftForm.reset();
+          } else {
+            showShiftAlert(result.message || 'Gagal memundurkan jam.', 'danger');
+          }
+        } catch (err) {
+          showShiftAlert('Kesalahan jaringan.', 'danger');
+        } finally {
+          shiftBtn.disabled = false;
+          shiftBtn.innerHTML = original;
+        }
+      });
+    }
+
+    // Reschedule day AJAX
+    const resForm = document.getElementById('reschedule-day-form');
+    const resBtn = document.getElementById('reschedule-submit-btn');
+    const resAlert = document.getElementById('reschedule-alert');
+
+    if (resForm) {
+      const showResAlert = (message, type = 'success') => {
+        resAlert.className = 'alert';
+        resAlert.classList.add(type === 'success' ? 'alert-success' : 'alert-danger');
+        resAlert.textContent = message;
+        resAlert.classList.remove('d-none');
+        setTimeout(() => {
+          resAlert.classList.add('d-none');
+        }, 5000);
+      };
+
+      resForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        resBtn.disabled = true;
+        const original = resBtn.innerHTML;
+        resBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+        try {
+          const response = await fetch(resForm.action, {
+            method: 'POST',
+            body: new FormData(resForm),
+          });
+          const result = await response.json();
+          if (response.ok && result.success) {
+            showResAlert(result.message, 'success');
+            resForm.reset();
+          } else {
+            showResAlert(result.message || 'Gagal memindahkan jadwal.', 'danger');
+          }
+        } catch (err) {
+          showResAlert('Kesalahan jaringan.', 'danger');
+        } finally {
+          resBtn.disabled = false;
+          resBtn.innerHTML = original;
+        }
+      });
+    }
+  });
+</script>

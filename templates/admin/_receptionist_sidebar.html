@@ -113,5 +113,67 @@
         }
       }
     });
+
+    // Delegated submit handling for Schedule Tool forms loaded dynamically
+    contentArea.addEventListener('submit', async function (e) {
+      const form = e.target.closest('form');
+      if (!form) return;
+
+      const action = form.getAttribute('action') || '';
+      const isGenerate = form.id === 'generate-slots-form' || action.endsWith('/admin/scheduler/generate');
+      const isShift = form.id === 'shift-time-form' || action.endsWith('/admin/scheduler/shift-time');
+      const isReschedule = form.id === 'reschedule-day-form' || action.endsWith('/admin/scheduler/reschedule-day');
+
+      if (!(isGenerate || isShift || isReschedule)) return; // let others pass
+
+      e.preventDefault();
+
+      // Locate alert boxes and buttons by context
+      let alertBox, submitBtn;
+      if (isGenerate) {
+        alertBox = contentArea.querySelector('#schedule-tool-alert');
+        submitBtn = contentArea.querySelector('#generate-submit-btn');
+      } else if (isShift) {
+        alertBox = contentArea.querySelector('#shift-alert');
+        submitBtn = contentArea.querySelector('#shift-submit-btn');
+      } else if (isReschedule) {
+        alertBox = contentArea.querySelector('#reschedule-alert');
+        submitBtn = contentArea.querySelector('#reschedule-submit-btn');
+      }
+
+      const showAlert = (message, type = 'success') => {
+        if (!alertBox) return;
+        alertBox.className = 'alert';
+        alertBox.classList.add(type === 'success' ? 'alert-success' : 'alert-danger');
+        alertBox.textContent = message;
+        alertBox.classList.remove('d-none');
+        setTimeout(() => { alertBox.classList.add('d-none'); }, 5000);
+      };
+
+      const original = submitBtn ? submitBtn.innerHTML : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+      }
+
+      try {
+        const response = await fetch(action, { method: 'POST', body: new FormData(form) });
+        const result = await response.json().catch(() => ({ success: false, message: 'Format respons tidak valid' }));
+        if (response.ok && result.success) {
+          showAlert(result.message || 'Berhasil.', 'success');
+          form.reset();
+        } else {
+          showAlert(result.message || 'Aksi gagal.', 'danger');
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert('Kesalahan jaringan.', 'danger');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = original;
+        }
+      }
+    });
   });
 </script>
