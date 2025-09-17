@@ -4,119 +4,174 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Selamat Datang di Klinik Sehat</title>
-
     <link
       href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
       rel="stylesheet"
     />
+
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/all.min.css') }}"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
-
     <style>
-      /* Mengimpor font dari Google Fonts */
-      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap");
 
-      /* Pengaturan dasar dan latar belakang */
       body {
-        font-family: "Poppins", sans-serif; /* Menerapkan font Poppins */
-        background-color: #e6eef7; /* Warna latar biru muda yang lembut */
-        background-image: radial-gradient(
-            circle at 10% 20%,
-            rgb(226, 234, 240) 0%,
-            rgba(226, 234, 240, 0) 50%
-          ),
-          radial-gradient(
-            circle at 80% 70%,
-            rgb(233, 237, 250) 0%,
-            rgba(233, 237, 250, 0) 50%
-          );
+        font-family: "Poppins", sans-serif;
+        background-color: #f8f7f4;
       }
 
-      .login-container {
+      .main-container {
+        display: flex;
+        align-items: center;
+        min-height: 100vh;
+        padding: 2rem;
+        overflow: hidden;
+      }
+
+      .login-wrapper {
+        display: flex;
+        align-items: stretch; /* <-- KUNCI #1: Membuat semua anak-item setinggi item terpanjang */
+        width: 100%;
+        max-width: 1100px;
+        margin: auto;
+      }
+
+      /* --- KOLOM KIRI (INFORMASI) --- */
+      .info-panel {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem;
+        border-radius: 1.25rem;
+        position: relative;
+        z-index: 10;
+        box-shadow: 0 15px 35px rgba(50, 50, 93, 0.1),
+          0 5px 15px rgba(0, 0, 0, 0.07);
+        flex: 0 0 66.66%;
+        display: flex; /* <-- KUNCI #2: Aktifkan flexbox untuk centering konten */
+        flex-direction: column;
+        justify-content: center; /* Konten di tengah vertikal */
+        align-items: center; /* Konten di tengah horizontal */
+      }
+
+      .doctor-img {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid rgba(255, 255, 255, 0.3);
+        margin-bottom: 1.5rem;
+      }
+
+      /* --- KOLOM KANAN (LOGIN) --- */
+      .login-panel {
+        background-color: #ffffff;
+        border-radius: 1.25rem;
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 100vh;
+        padding: 2rem;
+        margin-left: -80px;
+        padding-left: 110px;
+        flex: 0 0 45%;
       }
 
-      /* Pengaturan kartu login */
-      .login-card {
-        max-width: 450px;
+      .login-card-inner {
         width: 100%;
-        border: none;
-        border-radius: 1.25rem; /* Sudut lebih tumpul */
-        background-color: rgba(255, 255, 255, 0.8); /* Sedikit transparan */
-        backdrop-filter: blur(10px); /* Efek 'glass' */
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 1rem;
+        max-width: 380px;
       }
 
-      /* Pengaturan tipografi */
-      .clinic-name {
-        font-weight: 600; /* Sedikit lebih tebal */
-        color: #0d6efd; /* Warna biru primer Bootstrap */
-      }
-      .welcome-title {
-        font-weight: 600;
-        font-size: 1.5rem; /* Lebih besar dan menonjol */
-        color: #212529; /* Warna hitam lembut */
-      }
-
-      /* Pengaturan tombol Google */
-      .btn-google {
-        font-weight: 400;
-        transition: all 0.3s ease-in-out;
-        box-shadow: 0 4px 15px rgba(13, 110, 253, 0.2); /* Bayangan biru yang halus */
-      }
       .btn-google:hover {
         transform: translateY(-3px);
-        box-shadow: 0 7px 20px rgba(13, 110, 253, 0.3); /* Bayangan lebih kuat saat hover */
+        box-shadow: 0 7px 20px rgba(13, 110, 253, 0.3);
+      }
+
+      /* Penyesuaian untuk layar kecil (HP) */
+      @media (max-width: 991.98px) {
+        .login-wrapper {
+          flex-direction: column;
+          align-items: normal; /* Kembalikan ke default di HP */
+        }
+        .info-panel,
+        .login-panel {
+          flex: 1 1 100%;
+          width: 100%;
+        }
+        .info-panel {
+          margin-bottom: 0;
+          border-radius: 1.25rem 1.25rem 0 0; /* Sudut atas rounded */
+        }
+        .login-panel {
+          margin-left: 0;
+          padding-left: 2rem;
+          padding-top: 2rem;
+          border-radius: 0 0 1.25rem 1.25rem; /* Sudut bawah rounded */
+        }
       }
     </style>
   </head>
   <body>
-    <div class="login-container">
-      <div class="card shadow-lg login-card">
-        <div class="card-body p-4 p-lg-5 text-center">
-          <h3 class="mb-3 clinic-name">
-            <i class="fas fa-clinic-medical me-2"></i>Klinik Sehat
-          </h3>
-
-          <h1 class="welcome-title mb-2">Selamat Datang</h1>
-
-          <div class="d-grid gap-3">
-            <a
-              href="{{ url_for('login') }}"
-              class="btn btn-primary btn-lg btn-google"
+    <div class="main-container">
+      <div class="login-wrapper">
+        <div class="info-panel">
+          <img
+            src="{{ url_for('static', filename='images/foto-dokter.png') }}"
+            alt="Foto Dokter"
+            class="doctor-img"
+          />
+          <h2 class="mb-1">dr. Nama Dokter, Sp.OG</h2>
+          <p class="mb-4">Spesialis Kebidanan & Kandungan</p>
+          <div class="mb-3">
+            <span class="badge bg-light text-dark"
+              ><i class="fas fa-calendar-day me-2"></i>Senin - Jumat</span
             >
-              <img
-                src="https://developers.google.com/identity/images/g-logo.png"
-                height="22"
-                class="me-2"
-                style="
-                  background-color: white;
-                  border-radius: 50%;
-                  padding: 1px;
-                "
-              />
-              Login dengan Google
-            </a>
           </div>
+          <div>
+            <span class="badge bg-light text-dark"
+              ><i class="fas fa-clock me-2"></i>16:00 - 20:00 WIB</span
+            >
+          </div>
+          <hr class="my-4" style="border-color: rgba(255, 255, 255, 0.3)" />
 
-          <hr class="my-4" />
-
-          <div class="text-center">
-            <p class="mb-0 text-muted">
-              <a href="{{ url_for('admin_login') }}" class="fw-bold">Admin</a>
+          <p class="small">
+            Program Hamil, USG 4D, Konsultasi Kehamilan, dan Pemeriksaan Rutin.
+          </p>
+          <div class="info-panel-footer">
+            <hr class="my-3" style="border-color: rgba(255, 255, 255, 0.3)" />
+            <p class="small mb-0">
+              <i class="fas fa-map-marker-alt me-2"></i>
+              Jl. Pahlawan No. 123, Sidoarjo, Jawa Timur
             </p>
+          </div>
+        </div>
+
+        <div class="login-panel">
+          <div class="login-card-inner text-center">
+            <div class="d-grid gap-3">
+              <a
+                href="{{ url_for('login') }}"
+                class="btn btn-primary btn-lg btn-google"
+              >
+                <img
+                  src="https://developers.google.com/identity/images/g-logo.png"
+                  height="22"
+                  class="me-2"
+                  style="
+                    background-color: white;
+                    border-radius: 50%;
+                    padding: 1px;
+                  "
+                />
+                Login dengan Google
+              </a>
+            </div>
+            <hr class="my-4" />
+            <div class="text-center">
+              <a href="{{ url_for('admin_login') }}" class="fw-bold">Admin</a>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
   </body>
 </html>

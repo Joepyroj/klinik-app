@@ -12,7 +12,7 @@
 block page_header %}{% endblock %} {% block brand %}
 <a class="navbar-brand" href="{{ url_for('admin.index') }}">
   <i class="fas fa-clinic-medical"></i>
-  Klinik Sehat{% if current_user.is_authenticated %} {% if
+  Prakter dr. Nama dokter{% if current_user.is_authenticated %} {% if
   current_user.role.value == 'admin' %} Panel Administrator {% elif
   current_user.role.value == 'dokter' %}{% elif current_user.role.value ==
   'resepsionis' %}{% endif %} {% endif %}
@@ -169,7 +169,7 @@ block page_header %}{% endblock %} {% block brand %}
   class FlashMessageManager {
     constructor() {
       this.config = {
-        success: 4000, // Success hilang dalam 4 detik
+        success: 2000, // Success hilang dalam 2 detik
         info: 5000, // Info hilang dalam 5 detik
         warning: 7000, // Warning hilang dalam 7 detik (lebih penting)
         danger: 10000, // Error hilang dalam 10 detik (sangat penting)

@@ -516,3 +516,19 @@ body {
   border-color: #b8daff;
   color: #055160;
 }
+
+.clinic-footer {
+  background-color: #e9ecef; /* Warna abu-abu muda yang lembut */
+  color: #6c757d; /* Warna teks abu-abu */
+  border-top: 1px solid #dee2e6;
+}
+
+.footer-map-link {
+  font-weight: 600;
+  color: #0d6efd; /* Warna link biru primary */
+  text-decoration: none;
+}
+
+.footer-map-link:hover {
+  text-decoration: underline;
+}
