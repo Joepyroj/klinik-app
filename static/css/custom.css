@@ -1,534 +1,202 @@
 /* static/css/custom.css */
 
-/* Mengimpor Font Poppins dari Google Fonts */
+/* === 1. PENGATURAN GLOBAL & FONT === */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap");
 
 body {
   font-family: "Poppins", sans-serif;
-  background-color: #f0f2f5; /* Warna latar belakang abu-abu sangat muda */
+  background-color: #f0f2f5; /* Warna latar belakang umum */
 }
 
-/* Card gaya Apple */
+.content-wrapper {
+  padding: 1.5rem;
+}
+
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #343a40;
+}
+
+/* === 2. GAYA NAVIGASI & FOOTER === */
+
+/* Navbar Utama (Hijau-Biru) */
+.navbar {
+  background: linear-gradient(90deg, #4caf50, #2196f3) !important;
+}
+.navbar .navbar-brand,
+.navbar .nav-link {
+  color: #ffffff !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+.navbar .nav-link:hover {
+  color: #e0e0e0 !important;
+}
+
+/* Sidebar Resepsionis */
+#receptionist-sidebar-nav .card-header {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+#receptionist-sidebar-nav .list-group-item:last-child {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* Footer Pasien */
+.clinic-footer {
+  background-color: #e9ecef;
+  color: #6c757d;
+  border-top: 1px solid #dee2e6;
+}
+.footer-map-link {
+  font-weight: 600;
+  color: #0d6efd;
+  text-decoration: none;
+}
+.footer-map-link:hover {
+  text-decoration: underline;
+}
+
+/* === 3. GAYA KARTU (CARD) & ELEMEN UMUM === */
+
 .card {
-  border: none;
-  border-radius: 12px; /* Sudut lebih membulat */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Shadow yang lebih halus dan menyebar */
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: none;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
-
 .card:hover {
-  transform: translateY(-3px); /* Efek melayang sedikit saat hover */
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
 .card-header {
-  background-color: #ffffff; /* Header putih bersih */
+  background-color: #ffffff;
   border-bottom: 1px solid #e0e0e0;
   font-weight: 600;
-  padding: 1rem 1.5rem; /* Padding lebih besar */
-  border-radius: 12px 12px 0 0; /* Sudut atas membulat */
+  padding: 1rem 1.5rem;
+  border-radius: 12px 12px 0 0;
 }
-
 .card-header-custom {
-  background-color: #f7f7f7 !important; /* Latar belakang sedikit abu-abu untuk header kustom */
-  color: #333 !important; /* Warna teks lebih gelap */
+  background-color: #f8f9fa !important;
+  border-bottom: 1px solid #e9ecef;
 }
 
-/* Card utama (Summary) */
-.card.summary-card {
-  background: linear-gradient(
-    135deg,
-    #f8f9fa 0%,
-    #e9ecef 100%
-  ); /* Gradient halus */
-  border: 1px solid #dee2e6;
-}
-.summary-card .card-body {
-  padding: 2rem;
-}
-.summary-card h4 {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: #212529; /* Warna teks lebih gelap */
-  margin-bottom: 0.25rem;
-}
-.summary-card p.text-muted {
-  font-size: 0.95rem;
-  color: #6c757d !important;
-}
-
-/* List group untuk Antrean dan Selesai Diperiksa */
 .list-group-item {
-  border-color: #f0f2f5; /* Border yang lebih ringan */
+  border-color: #f0f2f5;
   padding: 0.8rem 1.5rem;
   font-size: 0.95rem;
   color: #495057;
 }
-
 .list-group-item:last-child {
   border-bottom-right-radius: 12px;
   border-bottom-left-radius: 12px;
 }
 .list-group-item:first-child {
-  border-top-right-radius: 0;
-  border-top-left-radius: 0;
+  border-radius: 0; /* Direset agar mengikuti header */
 }
 
-/* Pasien Hadir (Antrean) */
-.pasien-hadir {
-  background-color: #e3f2fd !important; /* Biru muda lebih lembut */
-  font-weight: 500;
-  color: #212529;
-}
+/* === 4. GAYA SPESIFIK HALAMAN & KOMPONEN === */
 
-/* Pasien Siap Diperiksa (Card Biru Primary) */
-.card.border-primary {
-  border-color: #007bff !important; /* Warna border primary */
-}
-.card.border-primary .card-header {
-  background-color: #007bff !important;
-  color: white !important;
-  border-bottom: none;
-  font-weight: 600;
-}
-
-/* Form dalam kartu "Siap Diperiksa" */
-.form-label {
-  font-weight: 500;
-  color: #495057;
-  margin-bottom: 0.3rem;
-}
-.form-control {
-  border-radius: 8px; /* Sudut input yang lebih halus */
-  border-color: #ced4da;
-  padding: 0.6rem 1rem;
-  font-size: 0.9rem;
-}
-.form-control:focus {
-  border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.btn-primary {
-  background-color: #007bff;
-  border-color: #007bff;
-  border-radius: 8px;
-  font-weight: 600;
-  padding: 0.75rem 1.25rem;
-  transition: background-color 0.2s ease, border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-.btn-primary:hover {
-  background-color: #0056b3;
-  border-color: #004085;
-  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
-}
-
-.btn-outline-secondary {
-  border-radius: 8px;
-  font-weight: 500;
-  color: #6c757d;
-  border-color: #6c757d;
-}
-.btn-outline-secondary:hover {
-  color: #fff;
-  background-color: #6c757d;
-  border-color: #6c757d;
-}
-
-/* Utilitas tambahan */
-.mt-4 {
-  margin-top: 1.5rem !important;
-}
-.mb-4 {
-  margin-bottom: 1.5rem !important;
-}
-.g-4 {
-  --bs-gutter-x: 1.5rem;
-  --bs-gutter-y: 1.5rem;
-} /* Jarak antar kolom lebih besar */
-.me-2 {
-  margin-right: 0.5rem !important;
-}
-.w-100 {
-  width: 100% !important;
-}
-/* Styling baru untuk kotak ringkasan */
-.summary-box-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
-
-.summary-box-item i {
-  font-size: 1.8rem;
-  opacity: 0.8;
-}
-
-.summary-value {
-  font-size: 2rem;
-  font-weight: 600;
-  margin: 0;
-  line-height: 1;
-}
-
-.summary-label {
-  font-size: 0.8rem;
-  color: #6c757d;
-  margin: 0;
-}
-
-/* Progress bar kustom */
-.custom-progress {
-  height: 28px;
-  border-radius: 14px;
-  font-size: 0.9rem;
-  background-color: #e9ecef;
-}
-
-.custom-progress .progress-bar {
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-}
-.siap-diperiksa-banner .card-body {
-  padding: 1rem 1.5rem;
-}
-
-.siap-diperiksa-banner .card-body .d-flex {
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.status-badge {
-  padding: 0.5em 0.8em;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.flatpickr-day.has-slots {
-  background: #d1ecf1; /* Warna biru muda (info) */
-  border-color: #bee5eb;
-  color: #0c5460;
-  font-weight: bold;
-}
-
-.flatpickr-day.has-slots:hover {
-  background: #bce8f1;
-}
-
-.page-medical-record-edit .card-header {
-  background-color: #fff3cd; /* Kuning muda */
-  color: #856404;
-  border-bottom: 2px solid #ffeeba;
-}
-
-/* Ganti warna label form HANYA di halaman ini */
-.page-medical-record-edit .form-label {
-  color: #0056b3; /* Biru tua */
-}
-
-/* Ganti warna tombol simpan HANYA di halaman ini */
-.page-medical-record-edit .btn-primary {
-  background-color: #28a745; /* Hijau */
-  border-color: #28a745;
-}
-
-.page-medical-record-edit .btn-primary:hover {
-  background-color: #218838;
-  border-color: #1e7e34;
-}
-
-/* Contoh: Menyembunyikan sesuatu HANYA di halaman ini */
-.page-medical-record-edit .footer-text {
-  display: none;
-}
-
-.patient-dashboard-theme {
-  --primary-color: #0d6efd; /* Biru Bootstrap */
-  --light-bg: #f8f9fa;
-  --card-shadow: 0 5px 15px rgba(0, 0, 0, 0.07);
-  --card-shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.1);
-  --border-color: #e9ecef;
-}
-
-/* Card utama yang melayang */
-.patient-dashboard-theme .dashboard-card {
-  background-color: #ffffff;
-  border: none;
-  border-radius: 12px;
-  box-shadow: var(--card-shadow);
-  transition: all 0.3s ease;
-  overflow: hidden; /* Penting untuk header */
-}
-
-.patient-dashboard-theme .dashboard-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--card-shadow-hover);
-}
-
+/* --- Dashboard Pasien --- */
 .patient-dashboard-theme .dashboard-card .card-header {
-  background-color: var(--primary-color);
+  background-color: #0d6efd;
   color: white;
-  font-weight: 500;
-  font-size: 1.1rem;
-  border-bottom: none;
-  padding: 1rem 1.5rem;
 }
-
-/* Tombol-tombol tanggal */
-.patient-dashboard-theme .date-btn {
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  border-width: 1px;
-}
-
-.patient-dashboard-theme .date-btn.active,
-.patient-dashboard-theme .date-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
-}
-/* Tombol Booking */
-.patient-dashboard-theme .btn-booking {
-  border-radius: 50px;
-  padding: 0.75rem 2rem;
-  font-weight: 600;
-  font-size: 1.1rem;
-}
-
-/* Kartu Janji Temu Berikutnya */
 .patient-dashboard-theme .next-appointment-card .card-body {
   background: linear-gradient(45deg, #0d6efd, #0d9afd);
   color: white;
+  padding: 1.5rem;
 }
-
+.patient-dashboard-theme .next-appointment-card h5 {
+  margin-bottom: 0.5rem !important;
+  font-size: 1rem;
+}
 .patient-dashboard-theme .next-appointment-card .display-6 {
+  font-size: 1.5rem;
+  margin-bottom: 0 !important;
   font-weight: 600;
 }
-
-.patient-dashboard-theme .next-appointment-card .qr-code-wrapper {
-  max-width: 100px; /* Lebar maksimum QR code */
-  max-height: 100px; /* Tinggi maksimum QR code */
-  padding: 5px; /* Kurangi padding di sekitar QR code jika ada */
+.patient-dashboard-theme .next-appointment-card .fs-4 {
+  font-size: 1.1rem !important;
+}
+.patient-dashboard-theme .qr-code-wrapper {
+  max-width: 100px;
+  max-height: 100px;
+  padding: 5px;
+}
+.patient-dashboard-theme .qr-code-wrapper img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
-.patient-dashboard-theme .next-appointment-card .qr-code-wrapper img {
-  width: 100%; /* Pastikan gambar mengisi lebar wrapper */
-  height: auto; /* Jaga rasio aspek */
-  display: block; /* Hilangkan spasi ekstra di bawah gambar */
-}
-
-/* Accordion Riwayat Pemeriksaan */
-.patient-dashboard-theme .accordion-button {
-  font-weight: 500;
-}
-
-.patient-dashboard-theme .accordion-button:not(.collapsed) {
-  background-color: var(--light-bg);
-  color: var(--primary-color);
-  box-shadow: inset 0 -1px 0 var(--border-color);
-}
-
+/* --- Tombol Tanggal & Slot --- */
+.date-btn,
 .patient-dashboard-theme .slot-btn {
+  min-width: 120px;
+  justify-content: center;
   border-radius: 8px;
   font-weight: 500;
   transition: all 0.2s ease;
-  border-width: 1px;
-  margin: 4px; /* Sedikit jarak antar tombol */
 }
-
+.date-btn.active,
+.date-btn:hover,
 .patient-dashboard-theme .slot-btn.active,
 .patient-dashboard-theme .slot-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
 }
 
-.navbar {
-  background: linear-gradient(
-    90deg,
-    #4caf50,
-    #2196f3
-  ) !important; /* Gradien dari Hijau ke Biru */
-}
-.navbar .navbar-brand,
-.navbar .nav-link {
-  color: #ffffff !important;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Shadow teks agar lebih terbaca */
-}
-.navbar .nav-link:hover {
-  color: #e0e0e0 !important;
-}
-
-.navbar-patient-custom {
-  background: linear-gradient(
-    90deg,
-    #4caf50,
-    #2196f3
-  ) !important; /* Gradien dari Hijau ke Biru */
-}
-
-.navbar-patient-custom {
-  background: linear-gradient(
-    90deg,
-    #4caf50,
-    #2196f3
-  ) !important; /* Gradien dari Hijau ke Biru */
-}
-
-.navbar-patient-custom .navbar-brand,
-.navbar-patient-custom .nav-link {
-  color: #ffffff !important;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Shadow teks agar lebih terbaca */
-}
-
-.navbar-patient-custom .nav-link:hover {
-  color: #e0e0e0 !important;
-}
-
-.patient-dashboard-theme .next-appointment-card .card-body {
-  padding: 1.5rem; /* Ubah dari 2rem (atau nilai lain) menjadi lebih kecil */
-}
-
-.patient-dashboard-theme .next-appointment-card h5 {
-  margin-bottom: 0.5rem !important; /* Kurangi margin bawah judul */
-  font-size: 1rem; /* Sedikit perkecil ukuran font judul */
-}
-
-.patient-dashboard-theme .next-appointment-card .display-6 {
-  font-size: 1.5rem; /* Perkecil ukuran font tanggal */
-  margin-bottom: 0 !important;
-}
-
-.patient-dashboard-theme .next-appointment-card .fs-4 {
-  font-size: 1.1rem !important; /* Perkecil ukuran font jam */
-}
-
+/* --- Running Text (Footer) --- */
 .running-text-container {
-  position: fixed; /* Membuat posisi tetap di layar */
-  bottom: 0; /* Menempel di bagian bawah */
-  left: 0; /* Menempel di sisi kiri */
-  width: 100%; /* Lebar penuh */
-  font-family: "Roboto", sans-serif; /* Terapkan font Roboto */
-  font-weight: 500; /* Sedikit lebih tebal dari normal */
-  font-size: 1rem; /* Sedikit lebih kecil agar rapi */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  font-family: "Roboto", sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
   background-color: transparent;
   color: #212529;
   text-shadow: 0px 0px 5px rgba(255, 255, 255, 0.7);
   padding: 0.5rem;
-  z-index: 1030; /* Memastikan posisinya di atas konten lain */
+  z-index: 1030;
   overflow: hidden;
   white-space: nowrap;
-  box-sizing: border-box;
-  border-top: none;
 }
-
 .running-text-content {
   display: inline-block;
   padding-left: 100%;
   margin: 0;
   animation: marquee-animation 40s linear infinite;
 }
-
-/* Berhentikan animasi saat di-hover */
 .running-text-container:hover .running-text-content {
   animation-play-state: paused;
 }
-
-/* Definisi animasi (biarkan sama) */
 @keyframes marquee-animation {
-  0% {
+  from {
     transform: translateX(0%);
   }
-  100% {
+  to {
     transform: translateX(-100%);
   }
 }
-
-.marquee-text {
-  vertical-align: middle;
-}
-
-/* Aturan untuk jarak pemisah */
 .marquee-separator {
-  display: inline-block; /* Wajib agar bisa diberi lebar */
-  width: 80px; /* Atur jarak di sini. Ganti angkanya sesuai selera */
+  display: inline-block;
+  width: 80px;
 }
 
-@keyframes flashCountdown {
-  from {
-    transform: scaleX(1);
-  }
-  to {
-    transform: scaleX(0);
-  }
-}
-
-/* Styling untuk flash messages */
+/* --- Flash Messages --- */
 .alert {
   margin-bottom: 1rem;
-  border-radius: 0.375rem;
   position: relative;
   transition: all 0.3s ease;
 }
-
-/* Hover effect */
 .alert:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Improve close button visibility */
-.alert .btn-close {
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-
-.alert .btn-close:hover {
-  opacity: 1;
-}
-
-/* Custom colors with better contrast */
-.alert-success {
-  background-color: #d1e7dd;
-  border-color: #badbcc;
-  color: #0f5132;
-}
-
-.alert-danger {
-  background-color: #f8d7da;
-  border-color: #f5c2c7;
-  color: #842029;
-}
-
-.alert-warning {
-  background-color: #fff3cd;
-  border-color: #ffecb5;
-  color: #664d03;
-}
-
-.alert-info {
-  background-color: #d1ecf1;
-  border-color: #b8daff;
-  color: #055160;
-}
-
-.clinic-footer {
-  background-color: #e9ecef; /* Warna abu-abu muda yang lembut */
-  color: #6c757d; /* Warna teks abu-abu */
-  border-top: 1px solid #dee2e6;
-}
-
-.footer-map-link {
-  font-weight: 600;
-  color: #0d6efd; /* Warna link biru primary */
-  text-decoration: none;
-}
-
-.footer-map-link:hover {
-  text-decoration: underline;
 }

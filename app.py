@@ -444,7 +444,7 @@ class ReceptionistPatientView(BaseView):
         # Ambil halaman saat ini untuk pagination, default ke halaman 1
         page = request.args.get('page', 1, type=int)
         # Tampilkan 10 pasien per halaman
-        patients = query.order_by(Patient.nama.asc()).paginate(page=page, per_page=10)
+        patients = query.order_by(Patient.id.asc()).paginate(page=page, per_page=10)
 
         return self.render('_receptionist_patient_list_content.html', patients=patients, search_query=search_query)
 

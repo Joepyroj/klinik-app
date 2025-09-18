@@ -94,8 +94,9 @@ block page_header %}{% endblock %} {% block brand %}
   </li>
   {% endif %}
 </ul>
-{% endblock %} {% block body %} {% block page_body %}{% endblock %} {% endblock
-%} {% block tail %} {{ super() }}
+{% endblock %} {% block body %}
+<div class="content-wrapper">{% block page_body %}{% endblock %}</div>
+{% endblock %} {% block tail %} {{ super() }}
 <script>
   function initializeScheduleViewer() {
     const dateSelector = document.getElementById("date-selector");
@@ -137,7 +138,7 @@ block page_header %}{% endblock %} {% block brand %}
                 : "Tersedia";
 
               const slotHtml = `
-                  <div class="col-md-3 col-sm-6">
+                  <div class="col-6 col-md-3 col-lg-2">
                     <div class="card h-100 ${cardBorder}">
                       <div class="card-body text-center p-2">
                         <h5 class="card-title mb-1">${slot.time}</h5>
