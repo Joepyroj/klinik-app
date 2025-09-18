@@ -161,6 +161,49 @@ def shift_time_action():
         else:
             flash(error_message, 'danger')
             return redirect(url_for('schedule_tool.index'))
+        
+@scheduler_bp.route('/delete-day', methods=['POST'])
+@login_required
+def delete_day_action():
+    try:
+        delete_date_str = request.form['delete_date']
+        delete_date = datetime.strptime(delete_date_str, '%Y-%m-%d').date()
+
+        start_of_day = datetime.combine(delete_date, datetime.min.time())
+        end_of_day = datetime.combine(delete_date, datetime.max.time())
+
+        # Safety check: Pastikan tidak ada slot yang sudah dibooking pada hari itu
+        booked_count = Slot.query.filter(
+            Slot.start_time.between(start_of_day, end_of_day),
+            Slot.is_booked == True
+        ).count()
+
+        if booked_count > 0:
+            return jsonify({
+                'success': False,
+                'message': f"Gagal! Terdapat {booked_count} slot yang sudah dibooking pada tanggal ini."
+            }), 400
+
+        # Hapus semua slot yang belum dibooking
+        slots_to_delete = Slot.query.filter(
+            Slot.start_time.between(start_of_day, end_of_day),
+            Slot.is_booked == False
+        ).all()
+
+        deleted_count = len(slots_to_delete)
+        for slot in slots_to_delete:
+            db.session.delete(slot)
+        
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f"Berhasil menghapus {deleted_count} slot pada tanggal {delete_date_str}."
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Terjadi kesalahan: {str(e)}'}), 500
 
 @scheduler_bp.route('/reschedule-day', methods=['POST'])
 @login_required

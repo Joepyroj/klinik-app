@@ -90,10 +90,49 @@
 </div>
 
 <div class="row g-4">
-  <div class="col-lg-6">
-    <div class="card shadow-sm">
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header card-header-custom bg-danger text-black">
+        <i class="fas fa-trash-alt me-2"></i>Hapus Jadwal per Hari
+      </div>
+      <div class="card-body">
+        <p class="card-text text-muted small">
+          Hapus semua slot yang <strong>belum dibooking</strong> pada tanggal
+          yang dipilih. Aksi ini tidak bisa dibatalkan.
+        </p>
+        <form
+          id="delete-day-form"
+          action="{{ url_for('scheduler.delete_day_action') }}"
+          method="POST"
+          onsubmit="return false;"
+        >
+          <div class="mb-3">
+            <label for="delete_date" class="form-label">Pilih Tanggal</label>
+            <input
+              type="date"
+              class="form-control"
+              id="delete_date"
+              name="delete_date"
+              required
+            />
+          </div>
+          <button
+            type="button"
+            class="btn btn-danger w-100"
+            id="delete-day-btn"
+            onclick="submitDeleteForm()"
+          >
+            <i class="fas fa-exclamation-triangle me-2"></i>Hapus Jadwal
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
       <div class="card-header card-header-custom">
-        <i class="fas fa-clock me-2"></i>Mundurkan Jam Praktik
+        <i class="fas fa-clock me-2"></i>Mundurkan Jam
       </div>
       <div class="card-body">
         <p class="card-text text-muted">
@@ -131,7 +170,7 @@
           </div>
           <button
             type="button"
-            class="btn btn-warning"
+            class="btn btn-warning w-100"
             id="shift-btn"
             onclick="submitShiftForm()"
           >
@@ -142,10 +181,10 @@
     </div>
   </div>
 
-  <div class="col-lg-6">
-    <div class="card shadow-sm">
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
       <div class="card-header card-header-custom">
-        <i class="fas fa-calendar-day me-2"></i>Pindahkan Jadwal Satu Hari
+        <i class="fas fa-calendar-day me-2"></i>Pindahkan Jadwal
       </div>
       <div class="card-body">
         <p class="card-text text-muted">
@@ -173,7 +212,7 @@
           </div>
           <button
             type="button"
-            class="btn btn-danger"
+            class="btn btn-info w-100"
             id="reschedule-btn"
             onclick="submitRescheduleForm()"
           >
@@ -307,6 +346,11 @@
   function submitGenerateForm() {
     console.log("Generate form submit clicked");
     submitFormAjax("generate-slots-form", "generate-btn", "Generating...");
+  }
+
+  function submitDeleteForm() {
+    console.log("Delete form submit clicked");
+    submitFormAjax("delete-day-form", "delete-day-btn", "Menghapus...");
   }
 
   function submitShiftForm() {

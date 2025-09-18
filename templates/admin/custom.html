@@ -98,6 +98,147 @@ block page_header %}{% endblock %} {% block brand %}
 <div class="content-wrapper">{% block page_body %}{% endblock %}</div>
 {% endblock %} {% block tail %} {{ super() }}
 <script>
+  window.ScheduleApp = {
+    datesWithSlots: [],
+
+    init: async function () {
+      await this.loadDatesWithSlots();
+      this.initializeFlatpickr();
+      this.setupEventListeners();
+    },
+
+    loadDatesWithSlots: async function () {
+      try {
+        const response = await fetch("{{ url_for('get_dates_with_slots') }}");
+        if (response.ok) this.datesWithSlots = await response.json();
+      } catch (error) {
+        console.error("Error memuat tanggal:", error);
+      }
+    },
+
+    initializeFlatpickr: function () {
+      const self = this;
+      document.querySelectorAll(".date-picker").forEach((picker) => {
+        if (picker._flatpickr) picker._flatpickr.destroy();
+      });
+      flatpickr(".date-picker", {
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        onDayCreate: function (dObj, dStr, fp, dayElem) {
+          const dateString = flatpickr.formatDate(dayElem.dateObj, "Y-m-d");
+          if (self.datesWithSlots.includes(dateString)) {
+            dayElem.classList.add("has-slots");
+            dayElem.title = "Tanggal ini sudah ada slot";
+          }
+        },
+      });
+    },
+
+    // --- DI SINI ANDA MENEMPATKAN FUNGSI EVENT LISTENER ---
+    setupEventListeners: function () {
+      const generateForm = document.getElementById("generate-form");
+      if (generateForm)
+        generateForm.addEventListener("submit", (e) =>
+          this.handleFormSubmit(e, "generate-btn")
+        );
+
+      const shiftForm = document.getElementById("shift-form");
+      if (shiftForm)
+        shiftForm.addEventListener("submit", (e) =>
+          this.handleFormSubmit(e, "shift-btn")
+        );
+
+      const rescheduleForm = document.getElementById("reschedule-form");
+      if (rescheduleForm)
+        rescheduleForm.addEventListener("submit", (e) =>
+          this.handleFormSubmit(e, "reschedule-btn")
+        );
+
+      const deleteDayForm = document.getElementById("delete-day-form");
+      if (deleteDayForm)
+        deleteDayForm.addEventListener("submit", (e) => {
+          if (
+            confirm(
+              "Anda yakin ingin menghapus semua slot kosong pada tanggal ini? Aksi ini tidak dapat dibatalkan."
+            )
+          ) {
+            this.handleFormSubmit(e, "delete-day-btn");
+          } else {
+            e.preventDefault();
+          }
+        });
+    },
+
+    handleFormSubmit: async function (event, buttonId) {
+      event.preventDefault();
+      const form = event.target;
+      const button = form.querySelector('button[type="submit"]'); // Lebih andal
+      if (!button) return;
+
+      const originalButtonContent = button.innerHTML;
+      this.setButtonLoading(button, true);
+
+      try {
+        const response = await fetch(form.action, {
+          method: "POST",
+          body: new FormData(form),
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const result = await response.json();
+        this.showNotification(
+          result.message,
+          result.success ? "success" : "danger"
+        );
+        if (result.success) {
+          form.reset();
+          await this.loadDatesWithSlots();
+          this.initializeFlatpickr();
+        }
+      } catch (error) {
+        this.showNotification("Terjadi kesalahan jaringan.", "danger");
+      } finally {
+        this.setButtonLoading(button, false, originalButtonContent);
+      }
+    },
+
+    setButtonLoading: function (button, isLoading, originalContent = null) {
+      if (isLoading) {
+        button.disabled = true;
+        button.innerHTML =
+          '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+      } else {
+        button.disabled = false;
+        if (originalContent) button.innerHTML = originalContent;
+      }
+    },
+
+    showNotification: function (message, type = "success") {
+      const container =
+        document.querySelector(".content-wrapper") || document.body;
+      const alertId = `alert-${Date.now()}`;
+      const alertType = type === "success" ? "alert-success" : "alert-danger";
+      const icon =
+        type === "success"
+          ? "fas fa-check-circle"
+          : "fas fa-exclamation-circle";
+
+      const alertHtml = `
+            <div id="${alertId}" class="alert ${alertType} alert-dismissible fade show" role="alert" style="position: fixed; top: 80px; right: 20px; z-index: 9999; min-width: 300px;">
+              <i class="${icon} me-2"></i>
+              ${message}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          `;
+
+      document.body.insertAdjacentHTML("beforeend", alertHtml);
+
+      setTimeout(() => {
+        const alert = document.getElementById(alertId);
+        if (alert) new bootstrap.Alert(alert).close();
+      }, 5000);
+    },
+  };
+
   function initializeScheduleViewer() {
     const dateSelector = document.getElementById("date-selector");
     if (!dateSelector) return; // Keluar jika elemen tidak ditemukan
